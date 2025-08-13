@@ -74,7 +74,7 @@ class RefereeCreateView(LoginRequiredMixin, CreateView):
 
 class RefereeUpdateView(LoginRequiredMixin, UpdateView):
     """
-    Update an existing referee
+    Update an existing referee in a modal window
     """
     model = Referee
     form_class = RefereeForm
@@ -82,12 +82,25 @@ class RefereeUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('referees:list')
     
     def form_valid(self, form):
-        messages.success(self.request, f'Referee "{form.cleaned_data["name"]}" updated successfully!')
+        referee_name = form.cleaned_data["name"]
+        
+        # Check if status changed
+        if 'is_active' in form.changed_data:
+            status = "activated" if form.cleaned_data["is_active"] else "deactivated"
+            messages.success(self.request, f'✅ Referee "{referee_name}" updated and {status}!')
+        else:
+            messages.success(self.request, f'✅ Referee "{referee_name}" updated successfully!')
+        
         return super().form_valid(form)
     
     def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
+        messages.error(self.request, '❌ Please correct the errors below.')
         return super().form_invalid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['modal_mode'] = True
+        return context
 
 
 class RefereeDetailView(LoginRequiredMixin, ListView):

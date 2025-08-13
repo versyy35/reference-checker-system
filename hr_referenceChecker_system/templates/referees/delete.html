@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Referee - HR Reference Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1050;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-header {
+        background-color: #dc3545;
+        color: white;
+        padding: 20px;
+        border-radius: 15px 15px 0 0;
+        position: relative;
+    }
+    
+    .modal-body {
+        padding: 30px;
+    }
+    
+    .modal-footer {
+        padding: 20px 30px;
+        border-top: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+        border-radius: 0 0 15px 15px;
+    }
+    
+    .close-btn {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .close-btn:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .referee-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .warning-icon {
+        color: #dc3545;
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+    
+    .btn-danger {
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .btn-secondary {
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="modal-backdrop" id="deleteRefereeModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Delete Referee
+            </h3>
+            <button type="button" class="close-btn" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body text-center">
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            
+            <h4>Are you sure you want to delete this referee?</h4>
+            <p class="text-muted mb-4">This action cannot be undone.</p>
+            
+            <div class="referee-info text-start">
+                <h6><strong>{{ object.name }}</strong></h6>
+                <p class="mb-1">
+                    <i class="fas fa-envelope me-2"></i>{{ object.email }}
+                </p>
+                <p class="mb-1">
+                    <i class="fas fa-user-tie me-2"></i>{{ object.relationship }}
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-id-badge me-2"></i>Applicant: {{ object.applicant_name }}
+                </p>
+                
+                {% if object.form_set.count > 0 %}
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> This referee has {{ object.form_set.count }} assigned form{{ object.form_set.count|pluralize }}. 
+                        Deleting will also remove all associated data.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary me-2" onclick="closeModal()">
+                <i class="fas fa-times me-1"></i>
+                Cancel
+            </button>
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash me-1"></i>
+                    Yes, Delete Referee
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function closeModal() {
+        // Go back to referees list
+        window.location.href = "{% url 'referees:list' %}";
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('deleteRefereeModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+</script>
+{% endblock %}
