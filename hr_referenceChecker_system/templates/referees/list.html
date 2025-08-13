@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Referees - HR Reference Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .referee-container {
+        padding: 20px;
+    }
+    
+    .stats-row {
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--help-red);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--help-dark-gray);
+        text-transform: uppercase;
+    }
+    
+    .search-section {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .btn-action {
+        margin-right: 5px;
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="referee-container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-users me-2"></i>
+            Manage Referees
+        </h1>
+        <a href="{% url 'referees:create' %}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>
+            Add New Referee
+        </a>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="row stats-row">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_referees }}</div>
+                <div class="stat-label">Total Referees</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ active_referees }}</div>
+                <div class="stat-label">Active Referees</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ inactive_referees }}</div>
+                <div class="stat-label">Inactive Referees</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="search-section">
+        <form method="GET" class="row g-3">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Search Referees</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="search" 
+                       name="search" 
+                       value="{{ search_query }}" 
+                       placeholder="Search by name, email, applicant, or relationship">
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive Only</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-search me-1"></i>Search
+                </button>
+                <a href="{% url 'referees:list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Referees Table -->
+    <div class="table-container">
+        {% if referees %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Applicant</th>
+                            <th>Relationship</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for referee in referees %}
+                        <tr>
+                            <td>
+                                <strong>{{ referee.name }}</strong>
+                            </td>
+                            <td>
+                                <a href="mailto:{{ referee.email }}">{{ referee.email }}</a>
+                            </td>
+                            <td>{{ referee.phone|default:"-" }}</td>
+                            <td>{{ referee.applicant_name }}</td>
+                            <td>{{ referee.relationship }}</td>
+                            <td>
+                                {% if referee.is_active %}
+                                    <span class="status-badge status-active">Active</span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ referee.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'referees:edit' referee.pk %}" 
+                                   class="btn btn-outline-warning btn-action" 
+                                   title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if referee.is_active %}
+                                    <a href="{% url 'referees:delete' referee.pk %}" 
+                                       class="btn btn-outline-danger btn-action" 
+                                       title="Deactivate"
+                                       onclick="return confirm('Are you sure you want to deactivate this referee?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <nav aria-label="Referee pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Previous</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Referees Found</h4>
+                <p class="text-muted">
+                    {% if search_query or status_filter %}
+                        No referees match your search criteria.
+                        <a href="{% url 'referees:list' %}">Clear filters</a> to see all referees.
+                    {% else %}
+                        You haven't added any referees yet.
+                    {% endif %}
+                </p>
+                {% if not search_query and not status_filter %}
+                    <a href="{% url 'referees:create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Your First Referee
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

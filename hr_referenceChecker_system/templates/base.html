@@ -172,7 +172,7 @@
                 {% if user.is_authenticated %}
                     <ul class="navbar-nav me-3">
                         <li class="nav-item">
-                            <a class="nav-link" href="#" title="Add User">
+                            <a class="nav-link" href="{% url 'referees:list' %}" title="Add User">
                                 <i class="fas fa-user-plus fa-lg"></i>
                             </a>
                         </li>
