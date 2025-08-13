@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - HR Reference Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        padding: 40px;
+    }
+    
+    .welcome-header {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 40px;
+        color: var(--help-dark-gray);
+    }
+    
+    .stats-container {
+        background-color: var(--help-white);
+        border-radius: 15px;
+        padding: 40px;
+        margin-bottom: 40px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 40px;
+        text-align: center;
+    }
+    
+    .stat-icon {
+        font-size: 4rem;
+        color: #000;
+        margin-bottom: 15px;
+    }
+    
+    .stat-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--help-dark-gray);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+    
+    .stat-number {
+        font-size: 4rem;
+        font-weight: bold;
+        color: var(--help-red);
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+    
+    .action-btn {
+        background-color: var(--help-red);
+        color: var(--help-white);
+        border: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        text-decoration: none;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        background-color: #8B0000;
+        color: var(--help-white);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .welcome-header {
+            font-size: 2rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .action-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Header -->
+    <div class="welcome-header">
+        WELCOME BACK, {{ user.first_name|upper|default:"USER" }}!
+    </div>
+
+    <!-- Statistics Container -->
+    <div class="stats-container">
+        <div class="stats-grid">
+            <!-- Total Referees -->
+            <div>
+                <div class="stat-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <div class="stat-label">Total Referees:</div>
+                <div class="stat-number">{{ total_referees }}</div>
+            </div>
+            
+            <!-- Assigned Forms -->
+            <div>
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-label">Assigned Forms:</div>
+                <div class="stat-number">{{ assigned_forms }}</div>
+            </div>
+            
+            <!-- Pending Responses -->
+            <div>
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-label">Pending Responses:</div>
+                <div class="stat-number">{{ pending_forms }}</div>
+            </div>
+            
+            <!-- Total Completed -->
+            <div>
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-label">Total Completed:</div>
+                <div class="stat-number">{{ completed_forms }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="#" class="action-btn">Manage Referees</a>
+        <a href="#" class="action-btn">Manage Forms</a>
+        <a href="#" class="action-btn">Assign Forms</a>
+        <a href="#" class="action-btn">View Responses</a>
+    </div>
+</div>
+{% endblock %}

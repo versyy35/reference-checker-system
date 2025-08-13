@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HR Reference Checker - HELP International School{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --help-red: #B3001B;
+            --help-light-pink: #FFF1F1;
+            --help-white: #FFFFFF;
+            --help-light-gray: #FEFEFE;
+            --help-gray: #DEE2E6;
+            --help-dark-gray: #34495E;
+            --help-green: #4CAF50;
+            --help-blue: #35F33C;
+        }
+        
+        body {
+            font-family: 'Pragati Narrow', Arial, sans-serif;
+            background-color: var(--help-light-pink);
+            color: var(--help-dark-gray);
+        }
+        
+        .navbar {
+            background-color: var(--help-red) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--help-white) !important;
+            font-size: 1.5rem;
+        }
+        
+        .nav-link {
+            color: var(--help-white) !important;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            color: var(--help-light-pink) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--help-red);
+            border-color: var(--help-red);
+        }
+        
+        .btn-primary:hover {
+            background-color: #8B0000;
+            border-color: #8B0000;
+        }
+        
+        .btn-success {
+            background-color: var(--help-green);
+            border-color: var(--help-green);
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        
+        .card-header {
+            background-color: var(--help-red);
+            color: var(--help-white);
+            font-weight: bold;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .help-logo {
+            width: 40px;
+            height: 40px;
+            background-color: var(--help-white);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+        
+        .help-logo i {
+            color: var(--help-red);
+            font-size: 1.2rem;
+        }
+        
+        .footer {
+            background-color: var(--help-red);
+            color: var(--help-white);
+            text-align: center;
+            padding: 15px 0;
+            margin-top: 40px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-color: var(--help-green);
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: var(--help-red);
+            color: #721c24;
+        }
+        
+        .form-control:focus {
+            border-color: var(--help-red);
+            box-shadow: 0 0 0 0.2rem rgba(179, 0, 27, 0.25);
+        }
+        
+        .table thead th {
+            background-color: var(--help-red);
+            color: var(--help-white);
+            border: none;
+        }
+        
+        .badge-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+        
+        .badge-completed {
+            background-color: var(--help-green);
+        }
+        
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--help-red);
+        }
+
+        /* Main content area - no constraints */
+        .main-content-area {
+            min-height: calc(100vh - 140px); /* Account for navbar and footer */
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'core:home' %}">
+                <span class="help-logo">
+                    <i class="fas fa-tree"></i>
+                </span>
+                HR Reference Checker
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                </ul>
+                
+                <!-- Quick Action Icons -->
+                {% if user.is_authenticated %}
+                    <ul class="navbar-nav me-3">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" title="Add User">
+                                <i class="fas fa-user-plus fa-lg"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" title="Create Template">
+                                <i class="fas fa-clipboard-list fa-lg"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" title="Assign Forms">
+                                <i class="fas fa-paper-plane fa-lg"></i>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" title="Notifications" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell fa-lg"></i>
+                                {% if notification_count > 0 %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {{ notification_count }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" style="width: 300px;">
+                                <li><h6 class="dropdown-header">Recent Activity</h6></li>
+                                {% for notification in notifications %}
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex align-items-start">
+                                                <i class="{{ notification.icon }} me-2 mt-1 text-{{ notification.type }}"></i>
+                                                <div class="flex-grow-1">
+                                                    <small class="text-muted">{{ notification.message }}</small>
+                                                    <br>
+                                                    <small class="text-muted">{{ notification.time|timesince }} ago</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    {% if not forloop.last %}<li><hr class="dropdown-divider"></li>{% endif %}
+                                {% empty %}
+                                    <li><span class="dropdown-item text-muted">No recent activity</span></li>
+                                {% endfor %}
+                                {% if notification_count > 5 %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-center" href="#">View All Notifications</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                    </ul>
+                {% endif %}
+                
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>{{ user.first_name|upper|default:"USER" }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'authentication:logout' %}">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'authentication:login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area - Full Width -->
+    <div class="main-content-area">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="container-fluid mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="mb-0">&copy; 2025 HELP International School - Quality Through Efficiency</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <small>HR Reference Checker System v1.0</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
