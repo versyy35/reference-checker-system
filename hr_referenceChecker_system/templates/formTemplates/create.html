@@ -1,0 +1,514 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Template - HR Reference Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .template-create-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        color: var(--help-red);
+        font-weight: bold;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--help-red);
+        padding-bottom: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--help-dark-gray);
+        margin-bottom: 8px;
+    }
+    
+    .required-field {
+        color: var(--help-red);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--help-red);
+        box-shadow: 0 0 0 0.2rem rgba(179, 0, 27, 0.25);
+    }
+    
+    .question-formset {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: #f8f9fa;
+    }
+    
+    .question-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .question-number {
+        background-color: var(--help-red);
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .delete-question {
+        color: #dc3545;
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+    
+    .delete-question:hover {
+        color: #a71d2a;
+    }
+    
+    .add-question-btn {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+        margin-bottom: 20px;
+    }
+    
+    .add-question-btn:hover {
+        background-color: #218838;
+        border-color: #218838;
+    }
+    
+    .choices-field {
+        display: none;
+    }
+    
+    .rating-field {
+        display: none;
+    }
+    
+    .btn-primary {
+        background-color: var(--help-red);
+        border-color: var(--help-red);
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .btn-secondary {
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .error-message {
+        color: var(--help-red);
+        font-size: 0.875rem;
+        margin-top: 5px;
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="template-create-container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-plus-circle me-2"></i>
+            Create New Template
+        </h1>
+        <a href="{% url 'form_templates:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Templates
+        </a>
+    </div>
+
+    <form method="post" id="templateForm">
+        {% csrf_token %}
+        
+        <!-- Template Details Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-info-circle me-2"></i>
+                Template Details
+            </h3>
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            Template Title <span class="required-field">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="error-message">{{ form.title.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <div class="form-check">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                Active template (can be assigned to referees)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                    Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="error-message">{{ form.description.errors.0 }}</div>
+                {% endif %}
+                <div class="help-text">Brief description of what this template is for</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.instructions.id_for_label }}" class="form-label">
+                    Instructions for Referees
+                </label>
+                {{ form.instructions }}
+                {% if form.instructions.errors %}
+                    <div class="error-message">{{ form.instructions.errors.0 }}</div>
+                {% endif %}
+                <div class="help-text">Instructions shown to referees before filling the form</div>
+            </div>
+        </div>
+
+        <!-- Questions Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-question-circle me-2"></i>
+                Questions
+            </h3>
+            
+            <div id="question-formset">
+                {{ question_formset.management_form }}
+                
+                {% for form in question_formset %}
+                    <div class="question-formset" data-form-index="{{ forloop.counter0 }}">
+                        <div class="question-header">
+                            <div class="d-flex align-items-center">
+                                <div class="question-number me-3">{{ forloop.counter }}</div>
+                                <h5 class="mb-0">Question {{ forloop.counter }}</h5>
+                            </div>
+                            {% if not forloop.first %}
+                                <span class="delete-question" onclick="deleteQuestion(this)" title="Delete Question">
+                                    <i class="fas fa-trash"></i>
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Hidden fields -->
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="{{ form.question_text.id_for_label }}" class="form-label">
+                                        Question Text <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.question_text }}
+                                    {% if form.question_text.errors %}
+                                        <div class="error-message">{{ form.question_text.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.question_type.id_for_label }}" class="form-label">
+                                        Question Type <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.question_type }}
+                                    {% if form.question_type.errors %}
+                                        <div class="error-message">{{ form.question_type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.order.id_for_label }}" class="form-label">
+                                        Order
+                                    </label>
+                                    {{ form.order }}
+                                    {% if form.order.errors %}
+                                        <div class="error-message">{{ form.order.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <div class="form-check">
+                                        {{ form.is_required }}
+                                        <label class="form-check-label" for="{{ form.is_required.id_for_label }}">
+                                            Required Question
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 rating-field">
+                                <div class="form-group">
+                                    <label for="{{ form.rating_scale.id_for_label }}" class="form-label">
+                                        Rating Scale (1 to ?)
+                                    </label>
+                                    {{ form.rating_scale }}
+                                    {% if form.rating_scale.errors %}
+                                        <div class="error-message">{{ form.rating_scale.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="choices-field">
+                            <div class="form-group">
+                                <label for="{{ form.choices_text.id_for_label }}" class="form-label">
+                                    Answer Choices <span class="required-field">*</span>
+                                </label>
+                                {{ form.choices_text }}
+                                {% if form.choices_text.errors %}
+                                    <div class="error-message">{{ form.choices_text.errors.0 }}</div>
+                                {% endif %}
+                                <div class="help-text">Enter each choice on a new line</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.help_text.id_for_label }}" class="form-label">
+                                Help Text
+                            </label>
+                            {{ form.help_text }}
+                            {% if form.help_text.errors %}
+                                <div class="error-message">{{ form.help_text.errors.0 }}</div>
+                            {% endif %}
+                            <div class="help-text">Optional additional information for this question</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <button type="button" class="btn add-question-btn" onclick="addQuestion()">
+                <i class="fas fa-plus me-2"></i>
+                Add Another Question
+            </button>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="form-section">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'form_templates:list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>
+                    Create Template
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let questionIndex = parseInt('{{ question_formset.total_form_count|default:1 }}');
+    
+    function updateQuestionNumbers() {
+        const questionForms = document.querySelectorAll('.question-formset');
+        questionForms.forEach((form, index) => {
+            const numberEl = form.querySelector('.question-number');
+            const headerEl = form.querySelector('.question-header h5');
+            const orderField = form.querySelector('input[name$="-order"]');
+            
+            if (numberEl) numberEl.textContent = index + 1;
+            if (headerEl) headerEl.textContent = `Question ${index + 1}`;
+            if (orderField) orderField.value = index + 1;
+        });
+    }
+    
+    function toggleQuestionFields(questionForm) {
+        const questionType = questionForm.querySelector('select[name$="-question_type"]').value;
+        const choicesField = questionForm.querySelector('.choices-field');
+        const ratingField = questionForm.querySelector('.rating-field');
+        
+        // Show/hide choices field
+        if (['SELECT', 'RADIO', 'CHECKBOX'].includes(questionType)) {
+            choicesField.style.display = 'block';
+        } else {
+            choicesField.style.display = 'none';
+        }
+        
+        // Show/hide rating field
+        if (questionType === 'RATING') {
+            ratingField.style.display = 'block';
+        } else {
+            ratingField.style.display = 'none';
+        }
+    }
+    
+    function addQuestion() {
+        const formset = document.getElementById('question-formset');
+        const totalForms = document.querySelector('input[name="questions-TOTAL_FORMS"]');
+        const currentTotal = parseInt(totalForms.value);
+        
+        // Clone the first form as template
+        const firstForm = document.querySelector('.question-formset');
+        const newForm = firstForm.cloneNode(true);
+        
+        // Update form index
+        newForm.setAttribute('data-form-index', currentTotal);
+        
+        // Update field names and IDs
+        const fields = newForm.querySelectorAll('input, select, textarea');
+        fields.forEach(field => {
+            const name = field.getAttribute('name');
+            const id = field.getAttribute('id');
+            
+            if (name) {
+                field.setAttribute('name', name.replace(/questions-\d+/, `questions-${currentTotal}`));
+            }
+            if (id) {
+                field.setAttribute('id', id.replace(/id_questions-\d+/, `id_questions-${currentTotal}`));
+            }
+            
+            // Clear values
+            if (field.type !== 'hidden') {
+                if (field.type === 'checkbox') {
+                    field.checked = field.getAttribute('name').includes('is_required');
+                } else {
+                    field.value = '';
+                }
+            }
+        });
+        
+        // Update labels
+        const labels = newForm.querySelectorAll('label');
+        labels.forEach(label => {
+            const forAttr = label.getAttribute('for');
+            if (forAttr) {
+                label.setAttribute('for', forAttr.replace(/id_questions-\d+/, `id_questions-${currentTotal}`));
+            }
+        });
+        
+        // Add delete button
+        const deleteBtn = newForm.querySelector('.delete-question');
+        if (deleteBtn) {
+            deleteBtn.style.display = 'inline';
+        }
+        
+        // Add to formset
+        formset.appendChild(newForm);
+        
+        // Update total forms count
+        totalForms.value = currentTotal + 1;
+        questionIndex = currentTotal + 1;
+        
+        // Update question numbers
+        updateQuestionNumbers();
+        
+        // Set up field toggle for new form
+        toggleQuestionFields(newForm);
+        
+        // Focus on new question text
+        const questionTextInput = newForm.querySelector('textarea[name$="-question_text"]');
+        if (questionTextInput) {
+            questionTextInput.focus();
+        }
+    }
+    
+    function deleteQuestion(deleteBtn) {
+        const questionForm = deleteBtn.closest('.question-formset');
+        const deleteCheckbox = questionForm.querySelector('input[name$="-DELETE"]');
+        
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = true;
+            questionForm.style.display = 'none';
+        } else {
+            questionForm.remove();
+        }
+        
+        updateQuestionNumbers();
+    }
+    
+    // Set up event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize field toggles for existing forms
+        document.querySelectorAll('.question-formset').forEach(form => {
+            toggleQuestionFields(form);
+            
+            // Add change listener for question type
+            const questionTypeSelect = form.querySelector('select[name$="-question_type"]');
+            if (questionTypeSelect) {
+                questionTypeSelect.addEventListener('change', function() {
+                    toggleQuestionFields(form);
+                });
+            }
+        });
+        
+        // Update initial question numbers and order
+        updateQuestionNumbers();
+    });
+    
+    // Form submission
+    document.getElementById('templateForm').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+        submitBtn.disabled = true;
+        
+        // Re-enable button after 5 seconds in case of errors
+        setTimeout(function() {
+            if (submitBtn.disabled) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }, 5000);
+    });
+</script>
+{% endblock %}

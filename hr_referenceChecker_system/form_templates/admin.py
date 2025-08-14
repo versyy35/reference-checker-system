@@ -1,86 +1,95 @@
 from django.contrib import admin
-from .models import Template, TextQuestion, MCQQuestion, RatingQuestion
+from django.utils.html import format_html
+from .models import Template, Question
 
 
-class TextQuestionInline(admin.TabularInline):
-    model = TextQuestion
-    extra = 0
-    fields = ['question_text', 'is_required', 'order_index', 'max_length', 'placeholder']
-
-
-class MCQQuestionInline(admin.TabularInline):
-    model = MCQQuestion
-    extra = 0
-    fields = ['question_text', 'is_required', 'order_index', 'options', 'allow_multiple']
-
-
-class RatingQuestionInline(admin.TabularInline):
-    model = RatingQuestion
-    extra = 0
-    fields = ['question_text', 'is_required', 'order_index', 'min_value', 'max_value', 'scale_label']
+class QuestionInline(admin.TabularInline):
+    """
+    Inline admin for questions within template admin
+    """
+    model = Question
+    extra = 1
+    fields = ['order', 'question_text', 'question_type', 'is_required', 'choices', 'rating_scale']
+    ordering = ['order']
 
 
 @admin.register(Template)
 class TemplateAdmin(admin.ModelAdmin):
-    list_display = ['title', 'created_by', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at', 'created_by']
+    """
+    Admin interface for templates
+    """
+    list_display = ['title', 'questions_count', 'assigned_forms_count', 'status_badge', 'created_at', 'updated_at']
+    list_filter = ['is_active', 'created_at', 'updated_at']
     search_fields = ['title', 'description']
-    list_editable = ['is_active']
     ordering = ['-created_at']
+    readonly_fields = ['created_at', 'updated_at']
+    inlines = [QuestionInline]
     
     fieldsets = (
         ('Template Information', {
-            'fields': ('title', 'description', 'is_active')
+            'fields': ('title', 'description', 'instructions', 'is_active')
         }),
-        ('Metadata', {
-            'fields': ('created_by',),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
     
-    inlines = [TextQuestionInline, MCQQuestionInline, RatingQuestionInline]
+    def questions_count(self, obj):
+        count = obj.get_questions_count()
+        if count > 0:
+            return format_html('<span class="badge badge-info">{}</span>', count)
+        return format_html('<span class="text-muted">0</span>')
+    questions_count.short_description = 'Questions'
     
-    def save_model(self, request, obj, form, change):
-        if not change:  # Creating new object
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
+    def assigned_forms_count(self, obj):
+        count = obj.get_assigned_forms_count()
+        if count > 0:
+            return format_html('<span class="badge badge-warning">{}</span>', count)
+        return format_html('<span class="text-muted">0</span>')
+    assigned_forms_count.short_description = 'Assigned Forms'
+    
+    def status_badge(self, obj):
+        if obj.is_active:
+            return format_html('<span class="badge badge-success">Active</span>')
+        return format_html('<span class="badge badge-secondary">Inactive</span>')
+    status_badge.short_description = 'Status'
+    
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion of templates with assigned forms
+        if obj and obj.get_assigned_forms_count() > 0:
+            return False
+        return super().has_delete_permission(request, obj)
 
 
-@admin.register(TextQuestion)
-class TextQuestionAdmin(admin.ModelAdmin):
-    list_display = ['template', 'question_text_short', 'is_required', 'order_index']
-    list_filter = ['template', 'is_required']
-    search_fields = ['question_text']
-    ordering = ['template', 'order_index']
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    """
+    Admin interface for questions
+    """
+    list_display = ['template', 'order', 'question_text_short', 'question_type', 'is_required', 'created_at']
+    list_filter = ['question_type', 'is_required', 'template__is_active', 'created_at']
+    search_fields = ['question_text', 'template__title']
+    ordering = ['template', 'order']
+    readonly_fields = ['created_at']
+    
+    fieldsets = (
+        ('Question Details', {
+            'fields': ('template', 'question_text', 'question_type', 'order', 'is_required')
+        }),
+        ('Question Options', {
+            'fields': ('choices', 'rating_scale', 'rating_labels'),
+            'description': 'Configure options for choice-based and rating questions'
+        }),
+        ('Additional Information', {
+            'fields': ('help_text', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
     
     def question_text_short(self, obj):
         return obj.question_text[:50] + "..." if len(obj.question_text) > 50 else obj.question_text
-    question_text_short.short_description = 'Question'
-
-
-@admin.register(MCQQuestion)
-class MCQQuestionAdmin(admin.ModelAdmin):
-    list_display = ['template', 'question_text_short', 'is_required', 'allow_multiple', 'order_index']
-    list_filter = ['template', 'is_required', 'allow_multiple']
-    search_fields = ['question_text']
-    ordering = ['template', 'order_index']
+    question_text_short.short_description = 'Question Text'
     
-    def question_text_short(self, obj):
-        return obj.question_text[:50] + "..." if len(obj.question_text) > 50 else obj.question_text
-    question_text_short.short_description = 'Question'
-
-
-@admin.register(RatingQuestion)
-class RatingQuestionAdmin(admin.ModelAdmin):
-    list_display = ['template', 'question_text_short', 'is_required', 'rating_range', 'order_index']
-    list_filter = ['template', 'is_required']
-    search_fields = ['question_text']
-    ordering = ['template', 'order_index']
-    
-    def question_text_short(self, obj):
-        return obj.question_text[:50] + "..." if len(obj.question_text) > 50 else obj.question_text
-    question_text_short.short_description = 'Question'
-    
-    def rating_range(self, obj):
-        return f"{obj.min_value} - {obj.max_value}"
-    rating_range.short_description = 'Range'
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('template')

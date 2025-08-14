@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ template.title }} - HR Reference Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .template-detail-container {
+        padding: 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .template-header {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        display: inline-block;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .template-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--help-red);
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--help-dark-gray);
+        margin-top: 5px;
+    }
+    
+    .questions-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        color: var(--help-red);
+        font-weight: bold;
+        margin-bottom: 25px;
+        border-bottom: 2px solid var(--help-red);
+        padding-bottom: 10px;
+    }
+    
+    .question-item {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: #f8f9fa;
+    }
+    
+    .question-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .question-number {
+        background-color: var(--help-red);
+        color: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    
+    .question-type-badge {
+        background-color: #6c757d;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-left: auto;
+    }
+    
+    .question-text {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--help-dark-gray);
+        margin-bottom: 10px;
+    }
+    
+    .question-details {
+        display: flex;
+        gap: 20px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .detail-item {
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .detail-icon {
+        margin-right: 5px;
+        width: 16px;
+    }
+    
+    .choices-list {
+        margin-top: 10px;
+        padding-left: 20px;
+    }
+    
+    .choices-list li {
+        margin-bottom: 5px;
+        color: #6c757d;
+    }
+    
+    .help-text {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-style: italic;
+        color: #6c757d;
+    }
+    
+    .action-buttons {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .btn {
+        margin: 0 10px 10px 0;
+        padding: 12px 24px;
+        font-weight: 600;
+    }
+    
+    .no-questions {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="template-detail-container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-file-alt me-2"></i>
+            Template Details
+        </h1>
+        <a href="{% url 'form_templates:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Templates
+        </a>
+    </div>
+
+    <!-- Template Header -->
+    <div class="template-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+                <div class="status-badge {% if template.is_active %}status-active{% else %}status-inactive{% endif %}">
+                    {% if template.is_active %}
+                        <i class="fas fa-check-circle me-1"></i>Active
+                    {% else %}
+                        <i class="fas fa-times-circle me-1"></i>Inactive
+                    {% endif %}
+                </div>
+                
+                <h2 class="mb-3">{{ template.title }}</h2>
+                
+                {% if template.description %}
+                    <p class="lead text-muted mb-3">{{ template.description }}</p>
+                {% endif %}
+                
+                {% if template.instructions %}
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Instructions for Referees:</h6>
+                        <p class="mb-0">{{ template.instructions }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Template Statistics -->
+        <div class="template-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ questions.count }}</span>
+                <div class="stat-label">Question{{ questions.count|pluralize }}</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ assigned_forms_count }}</span>
+                <div class="stat-label">Assigned Form{{ assigned_forms_count|pluralize }}</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ template.created_at|date:"M d, Y" }}</span>
+                <div class="stat-label">Created</div>
+            </div>
+            {% if template.updated_at != template.created_at %}
+                <div class="stat-item">
+                    <span class="stat-number">{{ template.updated_at|date:"M d, Y" }}</span>
+                    <div class="stat-label">Updated</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Questions Section -->
+    <div class="questions-section">
+        <h3 class="section-title">
+            <i class="fas fa-question-circle me-2"></i>
+            Questions ({{ questions.count }})
+        </h3>
+        
+        {% if questions %}
+            {% for question in questions %}
+                <div class="question-item">
+                    <div class="question-header">
+                        <div class="question-number">{{ forloop.counter }}</div>
+                        <div class="flex-grow-1">
+                            <div class="question-text">{{ question.question_text }}</div>
+                        </div>
+                        <div class="question-type-badge">{{ question.get_question_type_display }}</div>
+                    </div>
+                    
+                    <!-- Question Choices (for choice-based questions) -->
+                    {% if question.question_type in 'SELECT,RADIO,CHECKBOX' and question.choices %}
+                        <div class="choices-preview">
+                            <strong>Answer Options:</strong>
+                            <ul class="choices-list">
+                                {% for choice in question.get_choices_list %}
+                                    <li>{{ choice }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Rating Scale (for rating questions) -->
+                    {% if question.question_type == 'RATING' %}
+                        <div class="rating-preview">
+                            <strong>Rating Scale:</strong> 1 to {{ question.rating_scale }}
+                            {% if question.rating_labels %}
+                                <div class="mt-2">
+                                    {% for key, label in question.rating_labels.items %}
+                                        <span class="badge bg-secondary me-2">{{ key }}: {{ label }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Help Text -->
+                    {% if question.help_text %}
+                        <div class="help-text">
+                            <i class="fas fa-question-circle me-2"></i>{{ question.help_text }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Question Details -->
+                    <div class="question-details">
+                        <div class="detail-item">
+                            <i class="fas fa-sort-numeric-up detail-icon"></i>
+                            Order: {{ question.order }}
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-{% if question.is_required %}check-circle text-success{% else %}times-circle text-muted{% endif %} detail-icon"></i>
+                            {% if question.is_required %}Required{% else %}Optional{% endif %}
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-calendar detail-icon"></i>
+                            Added: {{ question.created_at|date:"M d, Y" }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-questions">
+                <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No Questions Added</h5>
+                <p class="text-muted">This template doesn't have any questions yet.</p>
+                <a href="{% url 'form_templates:edit' template.pk %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Questions
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <h5 class="mb-4">Template Actions</h5>
+        
+        <a href="{% url 'form_templates:edit' template.pk %}" class="btn btn-primary">
+            <i class="fas fa-edit me-2"></i>
+            Edit Template
+        </a>
+        
+        <form method="post" action="{% url 'form_templates:duplicate' template.pk %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success" 
+                    onclick="return confirm('Create a copy of this template?')">
+                <i class="fas fa-copy me-2"></i>
+                Duplicate Template
+            </button>
+        </form>
+        
+        {% if template.is_active %}
+            <a href="#" class="btn btn-info" onclick="alert('Form assignment feature coming soon!')">
+                <i class="fas fa-paper-plane me-2"></i>
+                Assign to Referees
+            </a>
+        {% endif %}
+        
+        {% if assigned_forms_count == 0 %}
+            <a href="{% url 'form_templates:delete' template.pk %}" class="btn btn-danger"
+               onclick="return confirm('Are you sure you want to delete this template?')">
+                <i class="fas fa-trash me-2"></i>
+                Delete Template
+            </a>
+        {% else %}
+            <button class="btn btn-outline-danger" disabled title="Cannot delete template with assigned forms">
+                <i class="fas fa-trash me-2"></i>
+                Delete Template
+            </button>
+        {% endif %}
+        
+        <div class="mt-3">
+            <small class="text-muted">
+                {% if assigned_forms_count > 0 %}
+                    <i class="fas fa-info-circle me-1"></i>
+                    This template has {{ assigned_forms_count }} assigned form{{ assigned_forms_count|pluralize }} and cannot be deleted.
+                {% else %}
+                    <i class="fas fa-info-circle me-1"></i>
+                    Template can be safely deleted as it has no assigned forms.
+                {% endif %}
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any interactive features here if needed
+    document.addEventListener('DOMContentLoaded', function() {
+        // Highlight questions on hover
+        document.querySelectorAll('.question-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.borderColor = 'var(--help-red)';
+                this.style.boxShadow = '0 4px 12px rgba(179, 0, 27, 0.15)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.borderColor = '#dee2e6';
+                this.style.boxShadow = 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}
