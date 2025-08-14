@@ -120,9 +120,10 @@ class RefereeDetailView(LoginRequiredMixin, ListView):
         return context
 
 
+
 class RefereeDeleteView(LoginRequiredMixin, DeleteView):
     """
-    Soft delete a referee (set is_active=False)
+    Permanently delete a referee from the database
     """
     model = Referee
     template_name = 'referees/delete.html'
@@ -130,8 +131,30 @@ class RefereeDeleteView(LoginRequiredMixin, DeleteView):
     
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        # Soft delete - just set is_active to False
-        self.object.is_active = False
-        self.object.save()
-        messages.success(request, f'Referee "{self.object.name}" has been deactivated.')
+        referee_name = self.object.name
+        
+        # Check if referee has any associated forms
+        associated_forms_count = self.object.form_set.count()
+        
+        # Perform actual deletion (this will also delete associated forms due to CASCADE)
+        self.object.delete()
+        
+        # Create appropriate success message
+        if associated_forms_count > 0:
+            messages.success(
+                request, 
+                f'🗑️ Referee "{referee_name}" and {associated_forms_count} associated form(s) have been permanently deleted.'
+            )
+        else:
+            messages.success(
+                request, 
+                f'🗑️ Referee "{referee_name}" has been permanently deleted.'
+            )
+        
         return redirect(self.success_url)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add form count to template context for warning message
+        context['associated_forms_count'] = self.object.form_set.count()
+        return context
