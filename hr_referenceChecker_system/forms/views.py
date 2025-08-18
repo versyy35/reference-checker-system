@@ -161,6 +161,12 @@ class BulkAssignmentCreateView(LoginRequiredMixin, CreateView):
     template_name = 'forms/bulk_create.html'
     success_url = reverse_lazy('forms:list')
     
+    def get_form_kwargs(self):
+        """Remove 'instance' from kwargs since BulkAssignmentForm is not a ModelForm"""
+        kwargs = super().get_form_kwargs()
+        kwargs.pop('instance', None)  # Remove instance if it exists
+        return kwargs
+    
     def form_valid(self, form):
         template = form.cleaned_data['template']
         referees = form.cleaned_data['referees']

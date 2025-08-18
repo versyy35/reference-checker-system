@@ -1,0 +1,481 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulk Assign Forms - HR Reference Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bulk-assignment-container {
+        padding: 20px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        color: var(--help-red);
+        font-weight: bold;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--help-red);
+        padding-bottom: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--help-dark-gray);
+        margin-bottom: 8px;
+    }
+    
+    .required-field {
+        color: var(--help-red);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--help-red);
+        box-shadow: 0 0 0 0.2rem rgba(179, 0, 27, 0.25);
+    }
+    
+    .btn-primary {
+        background-color: var(--help-red);
+        border-color: var(--help-red);
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .btn-secondary {
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .error-message {
+        color: var(--help-red);
+        font-size: 0.875rem;
+        margin-top: 5px;
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .referee-selection {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .referee-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .referee-card {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .referee-card:hover {
+        border-color: var(--help-red);
+        box-shadow: 0 2px 8px rgba(179, 0, 27, 0.1);
+    }
+    
+    .referee-card.selected {
+        border-color: var(--help-red);
+        background-color: rgba(179, 0, 27, 0.05);
+    }
+    
+    .referee-checkbox {
+        margin-right: 10px;
+    }
+    
+    .referee-info h6 {
+        margin-bottom: 5px;
+        color: var(--help-dark-gray);
+    }
+    
+    .referee-details {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .referee-details .badge {
+        font-size: 0.75rem;
+        margin-top: 5px;
+    }
+    
+    .selection-summary {
+        background: linear-gradient(135deg, var(--help-red) 0%, #8B0000 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        text-align: center;
+    }
+    
+    .selection-counter {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .bulk-actions {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 20px 0;
+    }
+    
+    .action-btn {
+        margin: 5px;
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .template-preview {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        border-left: 4px solid var(--help-red);
+    }
+    
+    .template-preview h6 {
+        color: var(--help-red);
+        margin-bottom: 10px;
+    }
+    
+    .preview-hidden {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bulk-assignment-container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-users me-2"></i>
+            Bulk Assign Forms
+        </h1>
+        <a href="{% url 'forms:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Assignments
+        </a>
+    </div>
+
+    <form method="post" id="bulkAssignmentForm">
+        {% csrf_token %}
+        
+        <!-- Template Selection Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-file-alt me-2"></i>
+                Select Template
+            </h3>
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="{{ form.template.id_for_label }}" class="form-label">
+                    Template <span class="required-field">*</span>
+                </label>
+                {{ form.template }}
+                {% if form.template.errors %}
+                    <div class="error-message">{{ form.template.errors.0 }}</div>
+                {% endif %}
+                <div class="help-text">{{ form.template.help_text }}</div>
+                
+                <!-- Template Preview (hidden by default) -->
+                <div class="template-preview preview-hidden" id="templatePreview">
+                    <h6><i class="fas fa-eye me-2"></i>Template Preview</h6>
+                    <div id="templateDetails"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referee Selection Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-user-friends me-2"></i>
+                Select Referees
+            </h3>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    Referees <span class="required-field">*</span>
+                </label>
+                {% if form.referees.errors %}
+                    <div class="error-message">{{ form.referees.errors.0 }}</div>
+                {% endif %}
+                <div class="help-text">{{ form.referees.help_text }}</div>
+                
+                <!-- Bulk Actions -->
+                <div class="bulk-actions">
+                    <button type="button" class="btn btn-outline-primary action-btn" onclick="selectAllReferees()">
+                        <i class="fas fa-check-square me-1"></i>Select All
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary action-btn" onclick="deselectAllReferees()">
+                        <i class="fas fa-square me-1"></i>Deselect All
+                    </button>
+                    <button type="button" class="btn btn-outline-info action-btn" onclick="toggleSelection()">
+                        <i class="fas fa-exchange-alt me-1"></i>Toggle Selection
+                    </button>
+                </div>
+                
+                <!-- Referee Selection Grid -->
+                <div class="referee-selection">
+                    <div class="referee-grid">
+                        {% for choice in form.referees %}
+                            <div class="referee-card" onclick="toggleRefereeCard(this)">
+                                <div class="d-flex align-items-start">
+                                    {{ choice.tag }}
+                                    <div class="referee-info flex-grow-1">
+                                        <h6>{{ choice.choice_label }}</h6>
+                                        <div class="referee-details">
+                                            {% with referee=choice.data.value %}
+                                                <div><i class="fas fa-envelope me-1"></i>{{ referee.email }}</div>
+                                                {% if referee.phone %}
+                                                    <div><i class="fas fa-phone me-1"></i>{{ referee.phone }}</div>
+                                                {% endif %}
+                                                <div><i class="fas fa-handshake me-1"></i>{{ referee.relationship }}</div>
+                                                <div class="mt-2">
+                                                    <span class="badge bg-info">{{ referee.applicant_name }}</span>
+                                                </div>
+                                            {% endwith %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Selection Summary -->
+                <div class="selection-summary" id="selectionSummary" style="display: none;">
+                    <div class="selection-counter" id="selectionCounter">0 referees selected</div>
+                    <div>Ready to assign forms to selected referees</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Options Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-envelope me-2"></i>
+                Email Notification
+            </h3>
+            
+            <div class="form-group">
+                <div class="form-check">
+                    {{ form.send_email }}
+                    <label class="form-check-label" for="{{ form.send_email.id_for_label }}">
+                        Send email notifications to all selected referees
+                    </label>
+                </div>
+                <div class="help-text">{{ form.send_email.help_text }}</div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="form-section">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'forms:list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>
+                    Cancel
+                </a>
+                <div>
+                    <a href="{% url 'forms:assign' %}" class="btn btn-outline-success me-2">
+                        <i class="fas fa-user me-2"></i>
+                        Assign Single Form Instead
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                        <i class="fas fa-paper-plane me-2"></i>
+                        <span id="submitText">Assign Forms</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const templateSelect = document.getElementById('{{ form.template.id_for_label }}');
+    const templatePreview = document.getElementById('templatePreview');
+    const templateDetails = document.getElementById('templateDetails');
+    const selectionSummary = document.getElementById('selectionSummary');
+    const selectionCounter = document.getElementById('selectionCounter');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    
+    // Template data for preview
+    const templateData = {
+        {% for template in form.template.queryset %}
+        {{ template.pk }}: {
+            title: "{{ template.title|escapejs }}",
+            description: "{{ template.description|escapejs }}",
+            questions: {{ template.get_questions_count }},
+            active: {{ template.is_active|yesno:"true,false" }}
+        },
+        {% endfor %}
+    };
+    
+    // Template selection handler
+    templateSelect.addEventListener('change', function() {
+        const templateId = this.value;
+        if (templateId && templateData[templateId]) {
+            const template = templateData[templateId];
+            templateDetails.innerHTML = `
+                <div class="row">
+                    <div class="col-md-8">
+                        <strong>${template.title}</strong>
+                        ${template.description ? `<p class="mt-2 mb-1">${template.description}</p>` : ''}
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-primary">${template.questions} question${template.questions !== 1 ? 's' : ''}</span>
+                        <span class="badge ${template.active ? 'bg-success' : 'bg-warning'} ms-1">
+                            ${template.active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
+                </div>
+            `;
+            templatePreview.classList.remove('preview-hidden');
+        } else {
+            templatePreview.classList.add('preview-hidden');
+        }
+        updateSubmitButton();
+    });
+    
+    // Update selection counter and submit button
+    function updateSelectionCounter() {
+        const selectedCount = document.querySelectorAll('input[name="referees"]:checked').length;
+        
+        if (selectedCount > 0) {
+            selectionCounter.textContent = `${selectedCount} referee${selectedCount !== 1 ? 's' : ''} selected`;
+            selectionSummary.style.display = 'block';
+        } else {
+            selectionSummary.style.display = 'none';
+        }
+        
+        updateSubmitButton();
+    }
+    
+    function updateSubmitButton() {
+        const templateSelected = templateSelect.value;
+        const refereesSelected = document.querySelectorAll('input[name="referees"]:checked').length;
+        
+        if (templateSelected && refereesSelected > 0) {
+            submitBtn.disabled = false;
+            submitText.textContent = `Assign Forms (${refereesSelected})`;
+        } else {
+            submitBtn.disabled = true;
+            submitText.textContent = 'Assign Forms';
+        }
+    }
+    
+    // Add event listeners to all referee checkboxes
+    document.querySelectorAll('input[name="referees"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const card = this.closest('.referee-card');
+            if (this.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+            updateSelectionCounter();
+        });
+    });
+    
+    // Initialize counter
+    updateSelectionCounter();
+});
+
+// Global functions for bulk actions
+function toggleRefereeCard(card) {
+    const checkbox = card.querySelector('input[type="checkbox"]');
+    checkbox.checked = !checkbox.checked;
+    checkbox.dispatchEvent(new Event('change'));
+}
+
+function selectAllReferees() {
+    document.querySelectorAll('input[name="referees"]').forEach(checkbox => {
+        if (!checkbox.checked) {
+            checkbox.checked = true;
+            checkbox.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
+function deselectAllReferees() {
+    document.querySelectorAll('input[name="referees"]').forEach(checkbox => {
+        if (checkbox.checked) {
+            checkbox.checked = false;
+            checkbox.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
+function toggleSelection() {
+    document.querySelectorAll('input[name="referees"]').forEach(checkbox => {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
+    });
+}
+
+// Form submission handling
+document.getElementById('bulkAssignmentForm').addEventListener('submit', function(e) {
+    const selectedCount = document.querySelectorAll('input[name="referees"]:checked').length;
+    const templateTitle = document.getElementById('{{ form.template.id_for_label }}').selectedOptions[0]?.text;
+    
+    if (selectedCount === 0) {
+        e.preventDefault();
+        alert('Please select at least one referee.');
+        return false;
+    }
+    
+    if (!confirm(`Are you sure you want to assign "${templateTitle}" to ${selectedCount} referee${selectedCount !== 1 ? 's' : ''}?`)) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Update submit button
+    const submitBtn = document.getElementById('submitBtn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Assigning...';
+    submitBtn.disabled = true;
+    
+    // Re-enable button after 10 seconds in case of errors
+    setTimeout(function() {
+        if (submitBtn.disabled) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    }, 10000);
+});
+</script>
+{% endblock %}
