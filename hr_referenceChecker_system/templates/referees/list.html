@@ -183,14 +183,12 @@
                                    title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                {% if referee.is_active %}
-                                    <a href="{% url 'referees:delete' referee.pk %}" 
-                                       class="btn btn-outline-danger btn-action" 
-                                       title="Deactivate"
-                                       onclick="return confirm('Are you sure you want to deactivate this referee?')">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                {% endif %}
+                                <a href="{% url 'referees:delete' referee.pk %}" 
+                                    class="btn btn-outline-danger btn-action" 
+                                    title="Deactivate"
+                                    onclick="return confirm('Are you sure you want to deactivate this referee?')">
+                                    <i class="fas fa-trash"></i>
+                                 </a>
                             </td>
                         </tr>
                         {% endfor %}
