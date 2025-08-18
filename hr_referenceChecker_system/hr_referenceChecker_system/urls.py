@@ -18,6 +18,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Import the public form view
+from responses.views import PublicFormView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('authentication.urls')),
@@ -25,6 +28,10 @@ urlpatterns = [
     path('templates/', include('form_templates.urls')),
     path('forms/', include('forms.urls')),
     path('responses/', include('responses.urls')),
+    
+    # Public form access (must be before core.urls to avoid conflicts)
+    path('form/<str:token>/', PublicFormView.as_view(), name='public_form'),
+    
     path('', include('core.urls')),  # Home and dashboard
 ]
 

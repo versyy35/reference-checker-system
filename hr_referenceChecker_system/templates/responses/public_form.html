@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% if error %}
+            Error - Reference Form
+        {% else %}
+            {{ template.title }} - Reference Form
+        {% endif %}
+    </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --help-red: #B3001B;
+            --help-dark-gray: #2c3e50;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .public-form-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .form-header {
+            background: linear-gradient(135deg, var(--help-red) 0%, #8B0000 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .form-header h1 {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .form-header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .form-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .error-content {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .error-invalid { color: #dc3545; }
+        .error-completed { color: #28a745; }
+        .error-expired { color: #ffc107; }
+        
+        .form-info {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--help-red);
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+        
+        .info-item:last-child { margin-bottom: 0; }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--help-dark-gray);
+        }
+        
+        .info-value { color: #6c757d; }
+        
+        .question-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            background-color: #fdfdfd;
+        }
+        
+        .question-number {
+            background-color: var(--help-red);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .question-text {
+            font-weight: 600;
+            color: var(--help-dark-gray);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .required-asterisk {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .question-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--help-red);
+            box-shadow: 0 0 0 0.2rem rgba(179, 0, 27, 0.25);
+        }
+        
+        .btn-primary {
+            background-color: var(--help-red);
+            border-color: var(--help-red);
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #8B0000;
+            border-color: #8B0000;
+        }
+        
+        .progress-bar {
+            background-color: var(--help-red);
+        }
+        
+        .question-counter {
+            background-color: #e9ecef;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--help-dark-gray);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .success-icon {
+            color: #28a745;
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .form-navigation {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .character-count {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-align: right;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="public-form-container">
+        <!-- Header -->
+        <div class="form-header">
+            <h1>
+                <i class="fas fa-university me-2"></i>
+                HELP International School
+            </h1>
+            <p>Reference Form System</p>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Main Content -->
+        <div class="form-content">
+            {% if error == 'invalid_token' %}
+                <!-- Invalid Token Error -->
+                <div class="error-content">
+                    <div class="error-icon error-invalid">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>Invalid or Expired Link</h3>
+                    <p class="lead">The form link you're trying to access is invalid or has expired.</p>
+                    <p>Please contact the HR department if you believe this is an error.</p>
+                </div>
+                
+            {% elif error == 'already_completed' %}
+                <!-- Already Completed -->
+                <div class="error-content">
+                    <div class="error-icon error-completed">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Form Already Completed</h3>
+                    <p class="lead">Thank you! This reference form has already been submitted.</p>
+                    {% if form_assignment.submitted_at %}
+                        <p><small class="text-muted">
+                            Submitted on {{ form_assignment.submitted_at|date:"F d, Y \a\\t H:i" }}
+                        </small></p>
+                    {% endif %}
+                </div>
+                
+            {% elif error == 'expired' %}
+                <!-- Expired Form -->
+                <div class="error-content">
+                    <div class="error-icon error-expired">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Form Has Expired</h3>
+                    <p class="lead">This reference form has expired and can no longer be submitted.</p>
+                    <p>Please contact the HR department for assistance.</p>
+                </div>
+                
+            {% else %}
+                <!-- Valid Form -->
+                {% if form_assignment.status == 'COMPLETED' %}
+                    <!-- Show success message for completed forms -->
+                    <div class="success-message">
+                        <div class="success-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h4>Thank You!</h4>
+                        <p>Your reference has been submitted successfully.</p>
+                        {% if form_assignment.submitted_at %}
+                            <small class="text-muted">
+                                Submitted on {{ form_assignment.submitted_at|date:"F d, Y \a\\t H:i" }}
+                            </small>
+                        {% endif %}
+                    </div>
+                    
+                {% elif show_form %}
+                    <!-- Display the actual form with questions -->
+                    <h2>
+                        <i class="fas fa-file-alt me-2 text-primary"></i>
+                        {{ template.title }}
+                    </h2>
+                    
+                    <!-- Form Information Summary -->
+                    <div class="alert alert-info">
+                        <strong>Reference for:</strong> {{ referee.applicant_name }} 
+                        <span class="ms-3"><strong>Your Role:</strong> {{ referee.relationship }}</span>
+                    </div>
+                    
+                    <!-- Progress Indicator -->
+                    <div class="question-counter">
+                        <i class="fas fa-list me-2"></i>
+                        Please complete all {{ questions.count }} question{{ questions.count|pluralize }}
+                    </div>
+                    
+                    <!-- The Actual Form -->
+                    <form method="post" id="referenceForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="submit">
+                        
+                        {% for question in questions %}
+                            <div class="question-section">
+                                <div class="d-flex align-items-start mb-3">
+                                    <span class="question-number">{{ forloop.counter }}</span>
+                                    <div class="flex-grow-1">
+                                        <div class="question-text">
+                                            {{ question.question_text }}
+                                            {% if question.is_required %}
+                                                <span class="required-asterisk">*</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if question.help_text %}
+                                            <div class="question-description">
+                                                {{ question.help_text }}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Question Input Field -->
+                                        {% if question.question_type == 'TEXT' %}
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   name="question_{{ question.id }}"
+                                                   id="question_{{ question.id }}"
+                                                   {% if question.is_required %}required{% endif %}
+                                                   placeholder="Enter your answer...">
+                                                   
+                                        {% elif question.question_type == 'TEXTAREA' %}
+                                            <textarea class="form-control" 
+                                                      name="question_{{ question.id }}"
+                                                      id="question_{{ question.id }}"
+                                                      rows="4"
+                                                      {% if question.is_required %}required{% endif %}
+                                                      placeholder="Please provide detailed information..."
+                                                      onkeyup="updateCharCount(this)"></textarea>
+                                            <div class="character-count">
+                                                <span id="count_{{ question.id }}">0</span> characters
+                                            </div>
+                                            
+                                        {% elif question.question_type == 'EMAIL' %}
+                                            <input type="email" 
+                                                   class="form-control" 
+                                                   name="question_{{ question.id }}"
+                                                   id="question_{{ question.id }}"
+                                                   {% if question.is_required %}required{% endif %}
+                                                   placeholder="example@domain.com">
+                                                   
+                                        {% elif question.question_type == 'NUMBER' %}
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   name="question_{{ question.id }}"
+                                                   id="question_{{ question.id }}"
+                                                   {% if question.is_required %}required{% endif %}
+                                                   placeholder="Enter a number...">
+                                                   
+                                        {% elif question.question_type == 'DATE' %}
+                                            <input type="date" 
+                                                   class="form-control" 
+                                                   name="question_{{ question.id }}"
+                                                   id="question_{{ question.id }}"
+                                                   {% if question.is_required %}required{% endif %}>
+                                                   
+                                        {% elif question.question_type == 'SELECT' %}
+                                            <select class="form-select" 
+                                                    name="question_{{ question.id }}"
+                                                    id="question_{{ question.id }}"
+                                                    {% if question.is_required %}required{% endif %}>
+                                                <option value="">Select an option...</option>
+                                                {% for choice in question.get_choices_list %}
+                                                    <option value="{{ choice }}">{{ choice }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            
+                                        {% elif question.question_type == 'RADIO' %}
+                                            {% for choice in question.get_choices_list %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" 
+                                                           type="radio" 
+                                                           name="question_{{ question.id }}"
+                                                           value="{{ choice }}"
+                                                           id="question_{{ question.id }}_{{ forloop.counter }}"
+                                                           {% if question.is_required %}required{% endif %}>
+                                                    <label class="form-check-label" 
+                                                           for="question_{{ question.id }}_{{ forloop.counter }}">
+                                                        {{ choice }}
+                                                    </label>
+                                                </div>
+                                            {% endfor %}
+                                            
+                                        {% elif question.question_type == 'CHECKBOX' %}
+                                            {% for choice in question.get_choices_list %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" 
+                                                           type="checkbox" 
+                                                           name="question_{{ question.id }}"
+                                                           value="{{ choice }}"
+                                                           id="question_{{ question.id }}_{{ forloop.counter }}">
+                                                    <label class="form-check-label" 
+                                                           for="question_{{ question.id }}_{{ forloop.counter }}">
+                                                        {{ choice }}
+                                                    </label>
+                                                </div>
+                                            {% endfor %}
+                                            
+                                        {% elif question.question_type == 'RATING' %}
+                                            <div class="rating-scale">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="1" id="question_{{ question.id }}_1" {% if question.is_required %}required{% endif %}>
+                                                    <label class="form-check-label" for="question_{{ question.id }}_1">1</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="2" id="question_{{ question.id }}_2" {% if question.is_required %}required{% endif %}>
+                                                    <label class="form-check-label" for="question_{{ question.id }}_2">2</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="3" id="question_{{ question.id }}_3" {% if question.is_required %}required{% endif %}>
+                                                    <label class="form-check-label" for="question_{{ question.id }}_3">3</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="4" id="question_{{ question.id }}_4" {% if question.is_required %}required{% endif %}>
+                                                    <label class="form-check-label" for="question_{{ question.id }}_4">4</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="5" id="question_{{ question.id }}_5" {% if question.is_required %}required{% endif %}>
+                                                    <label class="form-check-label" for="question_{{ question.id }}_5">5</label>
+                                                </div>
+                                                {% if question.rating_scale > 5 %}
+                                                    {% for extra in "678910"|make_list %}
+                                                        {% if extra|add:5 <= question.rating_scale %}
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="{{ extra|add:5 }}" id="question_{{ question.id }}_{{ extra|add:5 }}" {% if question.is_required %}required{% endif %}>
+                                                                <label class="form-check-label" for="question_{{ question.id }}_{{ extra|add:5 }}">{{ extra|add:5 }}</label>
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                                <div class="mt-2">
+                                                    <small class="text-muted">Scale: 1 (Low) - {{ question.rating_scale }} (High)</small>
+                                                </div>
+                                            </div>
+                                            
+                                        {% elif question.question_type == 'PHONE' %}
+                                            <input type="tel" 
+                                                   class="form-control" 
+                                                   name="question_{{ question.id }}"
+                                                   id="question_{{ question.id }}"
+                                                   {% if question.is_required %}required{% endif %}
+                                                   placeholder="{{ question.placeholder|default:'+60123456789' }}">
+                                            
+                                        {% else %}
+                                            <!-- Default to text input -->
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   name="question_{{ question.id }}"
+                                                   id="question_{{ question.id }}"
+                                                   {% if question.is_required %}required{% endif %}
+                                                   placeholder="Enter your answer...">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                No questions are configured for this template. Please contact the administrator.
+                            </div>
+                        {% endfor %}
+                        
+                        {% if questions %}
+                            <!-- Form Navigation -->
+                            <div class="form-navigation">
+                                <button type="submit" class="btn btn-primary btn-lg me-3" onclick="return confirmSubmission()">
+                                    <i class="fas fa-paper-plane me-2"></i>
+                                    Submit Reference
+                                </button>
+                                <a href="{{ request.path }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancel
+                                </a>
+                                
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-shield-alt me-1"></i>
+                                        Your responses are confidential and secure
+                                    </small>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </form>
+                    
+                {% else %}
+                    <!-- Initial form information display -->
+                    <h2>
+                        <i class="fas fa-file-alt me-2 text-primary"></i>
+                        {{ template.title }}
+                    </h2>
+                    
+                    {% if template.description %}
+                        <p class="lead">{{ template.description }}</p>
+                    {% endif %}
+                    
+                    <!-- Form Information -->
+                    <div class="form-info">
+                        <h5 class="mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Reference Details
+                        </h5>
+                        <div class="info-item">
+                            <span class="info-label">Applicant:</span>
+                            <span class="info-value">{{ referee.applicant_name }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Your Relationship:</span>
+                            <span class="info-value">{{ referee.relationship }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Number of Questions:</span>
+                            <span class="info-value">{{ questions.count }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Assigned Date:</span>
+                            <span class="info-value">{{ form_assignment.created_at|date:"F d, Y" }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Instructions -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Instructions</h6>
+                        <ul class="mb-0">
+                            <li>Please answer all questions honestly and thoroughly</li>
+                            <li>All questions marked with <span class="text-danger">*</span> are required</li>
+                            <li>Review your answers before final submission</li>
+                            <li>Once submitted, you cannot modify your responses</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Start Form Button -->
+                    <div class="text-center mt-4">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="start">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-play me-2"></i>
+                                Start Reference Form
+                            </button>
+                        </form>
+                        
+                        <p class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt me-1"></i>
+                                Your responses are confidential and secure
+                            </small>
+                        </p>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; {{ "now"|date:"Y" }} HELP International School. All rights reserved.</p>
+            <p><small>If you need assistance, please contact our HR department.</small></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateCharCount(textarea) {
+            const count = textarea.value.length;
+            const countElement = document.getElementById('count_' + textarea.name.split('_')[1]);
+            if (countElement) {
+                countElement.textContent = count;
+            }
+        }
+        
+        function confirmSubmission() {
+            return confirm('Are you sure you want to submit your reference? Once submitted, you cannot make changes.');
+        }
+        
+        // Auto-save functionality (optional)
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('referenceForm');
+            if (form) {
+                // Add any auto-save logic here if needed
+                console.log('Reference form loaded successfully');
+            }
+        });
+    </script>
+</body>
+</html>

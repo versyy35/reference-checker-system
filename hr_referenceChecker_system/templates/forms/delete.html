@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Assignment - HR Reference Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        padding: 20px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    
+    .delete-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .warning-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .warning-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.9;
+    }
+    
+    .assignment-info {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--help-dark-gray);
+    }
+    
+    .info-value {
+        color: #6c757d;
+        text-align: right;
+    }
+    
+    .consequences-list {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .consequences-list h6 {
+        color: #856404;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+    
+    .consequences-list ul {
+        margin-bottom: 0;
+        color: #856404;
+    }
+    
+    .consequences-list li {
+        margin-bottom: 8px;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .btn-danger:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+    }
+    
+    .btn-secondary {
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .completed-warning {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    @media (max-width: 576px) {
+        .action-buttons {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .action-buttons .btn {
+            width: 100%;
+        }
+        
+        .info-item {
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .info-value {
+            text-align: left;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-trash-alt me-2"></i>
+            Delete Assignment
+        </h1>
+        <a href="{% url 'forms:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Assignments
+        </a>
+    </div>
+
+    <!-- Warning Section -->
+    <div class="delete-section">
+        <div class="warning-header">
+            <div class="warning-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>⚠️ Confirm Deletion</h3>
+            <p class="mb-0">This action cannot be undone!</p>
+        </div>
+
+        <!-- Assignment Information -->
+        <div class="assignment-info">
+            <h5 class="mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                Assignment Details
+            </h5>
+            <div class="info-item">
+                <span class="info-label">Template:</span>
+                <span class="info-value">{{ object.template.title }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Referee:</span>
+                <span class="info-value">{{ object.referee.name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email:</span>
+                <span class="info-value">{{ object.referee.email }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Applicant:</span>
+                <span class="info-value">{{ object.referee.applicant_name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Status:</span>
+                <span class="info-value">
+                    {% if object.status == 'PENDING' %}
+                        <span class="badge bg-warning">Pending</span>
+                    {% else %}
+                        <span class="badge bg-success">Completed</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Assigned:</span>
+                <span class="info-value">{{ object.created_at|date:"F d, Y \a\\t H:i" }}</span>
+            </div>
+            {% if object.submitted_at %}
+            <div class="info-item">
+                <span class="info-label">Submitted:</span>
+                <span class="info-value">{{ object.submitted_at|date:"F d, Y \a\\t H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Special Warning for Completed Forms -->
+        {% if object.status == 'COMPLETED' %}
+            <div class="completed-warning">
+                <h6><i class="fas fa-shield-alt me-2"></i>Completed Form Notice</h6>
+                <p class="mb-0">
+                    <strong>Warning:</strong> This form has already been completed and submitted. 
+                    Deleting it will permanently remove the submission data and responses.
+                    Consider if you really need to delete this completed reference.
+                </p>
+            </div>
+        {% endif %}
+
+        <!-- Consequences -->
+        <div class="consequences-list">
+            <h6><i class="fas fa-exclamation-circle me-2"></i>What will happen when you delete this assignment:</h6>
+            <ul>
+                <li>The assignment will be permanently removed from the system</li>
+                <li>The referee will no longer be able to access the form</li>
+                {% if object.status == 'COMPLETED' %}
+                    <li><strong>All submitted responses and data will be permanently lost</strong></li>
+                {% endif %}
+                <li>Any email links sent to the referee will become invalid</li>
+                <li>This action cannot be reversed or undone</li>
+                <li>You will need to create a new assignment if you want to reassign this template</li>
+            </ul>
+        </div>
+
+        <!-- Confirmation Text -->
+        <div class="alert alert-danger">
+            <h6><i class="fas fa-question-circle me-2"></i>Are you absolutely sure?</h6>
+            <p class="mb-0">
+                Please confirm that you want to permanently delete the assignment of 
+                <strong>"{{ object.template.title }}"</strong> to <strong>{{ object.referee.name }}</strong>.
+            </p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <div>
+                <a href="{% url 'forms:detail' object.pk %}" class="btn btn-outline-info me-2">
+                    <i class="fas fa-eye me-2"></i>
+                    View Details
+                </a>
+                <a href="{% url 'forms:list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>
+                    Cancel
+                </a>
+            </div>
+            
+            <form method="post" style="display: inline;" id="deleteForm">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" onclick="return confirmDeletion()">
+                    <i class="fas fa-trash-alt me-2"></i>
+                    Yes, Delete Permanently
+                </button>
+            </form>
+        </div>
+
+        <!-- Alternative Actions -->
+        {% if object.status == 'PENDING' %}
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="text-muted">Alternative Actions:</h6>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{% url 'forms:edit' object.pk %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit me-1"></i>Edit Assignment
+                    </a>
+                    <a href="{% url 'forms:resend' object.pk %}" class="btn btn-outline-warning btn-sm"
+                       onclick="return confirm('Send reminder email to {{ object.referee.name }}?')">
+                        <i class="fas fa-envelope me-1"></i>Send Reminder
+                    </a>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    Consider these options instead of deleting if you just need to make changes.
+                </small>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDeletion() {
+    const templateTitle = "{{ object.template.title|escapejs }}";
+    const refereeName = "{{ object.referee.name|escapejs }}";
+    const status = "{{ object.status }}";
+    
+    let confirmMessage = `Are you absolutely sure you want to delete the assignment of "${templateTitle}" to ${refereeName}?`;
+    
+    if (status === 'COMPLETED') {
+        confirmMessage += '\n\nWARNING: This form has been completed and all response data will be permanently lost!';
+    }
+    
+    confirmMessage += '\n\nThis action cannot be undone.';
+    
+    return confirm(confirmMessage);
+}
+
+// Add some visual feedback
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForm = document.getElementById('deleteForm');
+    
+    deleteForm.addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        
+        // Change button text to show it's processing
+        setTimeout(function() {
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+                submitBtn.disabled = true;
+            }
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

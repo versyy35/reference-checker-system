@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy, reverse
@@ -292,14 +292,16 @@ class FormAssignmentDeleteView(LoginRequiredMixin, DeleteView):
         return redirect(self.success_url)
 
 
-class ResendNotificationView(LoginRequiredMixin, DetailView):
+class ResendNotificationView(LoginRequiredMixin, View):
     """
     Resend email notification for a form assignment
     """
-    model = Form
+    def get(self, request, *args, **kwargs):
+        """Redirect GET requests to the detail page"""
+        return redirect('forms:detail', pk=kwargs['pk'])
     
     def post(self, request, *args, **kwargs):
-        assignment = self.get_object()
+        assignment = get_object_or_404(Form, pk=kwargs['pk'])
         
         if assignment.status == FormStatus.COMPLETED:
             messages.error(request, '❌ Cannot resend notification for completed forms.')

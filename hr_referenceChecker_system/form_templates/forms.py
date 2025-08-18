@@ -106,6 +106,9 @@ class QuestionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
+        # Make question_text not required in the form (we'll validate in the view)
+        self.fields['question_text'].required = False
+        
         # Set default values
         if not self.instance.pk:
             self.fields['is_required'].initial = True
@@ -117,26 +120,33 @@ class QuestionForm(forms.ModelForm):
     
     def clean(self):
         cleaned_data = super().clean()
+        question_text = cleaned_data.get('question_text')
         question_type = cleaned_data.get('question_type')
         choices_text = cleaned_data.get('choices_text')
         
-        # Validate choices for choice-based questions
-        if question_type in [QuestionType.SELECT, QuestionType.RADIO, QuestionType.CHECKBOX]:
-            if not choices_text or not choices_text.strip():
-                raise forms.ValidationError(
-                    f'{question_type} questions must have at least one choice.'
-                )
-            
-            # Check minimum choices
-            choices_list = [choice.strip() for choice in choices_text.split('\n') if choice.strip()]
-            if len(choices_list) < 2:
-                raise forms.ValidationError(
-                    f'{question_type} questions must have at least 2 choices.'
-                )
+        # Only validate if there's actually a question_text (not an empty form)
+        if question_text:
+            # Validate choices for choice-based questions
+            if question_type in [QuestionType.SELECT, QuestionType.RADIO, QuestionType.CHECKBOX]:
+                if not choices_text or not choices_text.strip():
+                    raise forms.ValidationError(
+                        f'{question_type} questions must have at least one choice.'
+                    )
+                
+                # Check minimum choices
+                choices_list = [choice.strip() for choice in choices_text.split('\n') if choice.strip()]
+                if len(choices_list) < 2:
+                    raise forms.ValidationError(
+                        f'{question_type} questions must have at least 2 choices.'
+                    )
         
         return cleaned_data
     
     def save(self, commit=True):
+        # Don't save if there's no question text (empty form)
+        if not self.cleaned_data.get('question_text'):
+            return None
+            
         instance = super().save(commit=False)
         
         # Set choices from choices_text
@@ -150,16 +160,15 @@ class QuestionForm(forms.ModelForm):
             instance.save()
         return instance
 
-
 # Formset for managing questions within a template
 QuestionFormSet = inlineformset_factory(
     Template,
     Question,
     form=QuestionForm,
-    extra=1,  # Start with 1 empty form
+    extra=0,  # Changed from 1 to 0 - no automatic empty forms
     can_delete=True,
-    min_num=1,  # Require at least 1 question
-    validate_min=True,
+    min_num=0,  # Changed from 1 to 0 - allow templates without questions temporarily
+    validate_min=False,  # Changed to False - don't validate minimum on form level
     fields=['question_text', 'question_type', 'is_required', 'order', 'rating_scale', 'help_text']
 )
 

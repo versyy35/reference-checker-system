@@ -138,8 +138,28 @@ class TemplateUpdateView(LoginRequiredMixin, UpdateView):
         
         with transaction.atomic():
             self.object = form.save()
+            
+            # Check if formset is valid
             if question_formset.is_valid():
-                question_formset.save()
+                # Process each form in the formset
+                for question_form in question_formset:
+                    if question_form.cleaned_data and not question_form.cleaned_data.get('DELETE', False):
+                        # Only save forms that have actual data
+                        if question_form.cleaned_data.get('question_text'):  # Check if there's actual content
+                            question_instance = question_form.save(commit=False)
+                            question_instance.template = self.object
+                            
+                            # Handle choices_text
+                            choices_text = question_form.cleaned_data.get('choices_text', '')
+                            if choices_text and question_instance.question_type in ['SELECT', 'RADIO', 'CHECKBOX']:
+                                question_instance.set_choices_from_text(choices_text)
+                            
+                            question_instance.save()
+                
+                # Delete forms marked for deletion
+                for question_form in question_formset.deleted_forms:
+                    if question_form.instance.pk:
+                        question_form.instance.delete()
                 
                 # Check if status changed
                 if 'is_active' in form.changed_data:
@@ -150,6 +170,10 @@ class TemplateUpdateView(LoginRequiredMixin, UpdateView):
                 
                 return redirect('form_templates:list')
             else:
+                # Print formset errors for debugging
+                print("Formset errors:", question_formset.errors)
+                print("Non-form errors:", question_formset.non_form_errors())
+                messages.error(self.request, '❌ Please correct the errors in the questions below.')
                 return self.form_invalid(form)
     
     def form_invalid(self, form):
