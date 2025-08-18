@@ -145,6 +145,59 @@
         .main-content-area {
             min-height: calc(100vh - 140px); /* Account for navbar and footer */
         }
+
+        /* Simple hover effects */
+        
+        /* Card hover lift */
+        .card, .stat-card, .table-container, .search-section {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .card:hover, .stat-card:hover, .table-container:hover, .search-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Button hover enhancement */
+        .btn {
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        /* Navigation hover */
+        .nav-link {
+            transition: transform 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Table row hover */
+        .table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(179, 0, 27, 0.05);
+        }
+        
+        /* Action button hover */
+        .btn-action:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Mobile - disable hover effects */
+        @media (max-width: 768px) {
+            .card:hover, .stat-card:hover, .table-container:hover, .search-section:hover,
+            .btn:hover, .nav-link:hover, .btn-action:hover {
+                transform: none;
+                box-shadow: inherit;
+            }
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -172,12 +225,12 @@
                 {% if user.is_authenticated %}
                     <ul class="navbar-nav me-3">
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'referees:list' %}" title="Add User">
+                            <a class="nav-link" href="{% url 'referees:list' %}" title="Manage Referees">
                                 <i class="fas fa-user-plus fa-lg"></i>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'form_templates:list' %}" title="Create Template">
+                            <a class="nav-link" href="{% url 'form_templates:list' %}" title="Manage Templates">
                                 <i class="fas fa-clipboard-list fa-lg"></i>
                             </a>
                         </li>
