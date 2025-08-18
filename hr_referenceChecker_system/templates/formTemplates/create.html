@@ -396,69 +396,124 @@
         const totalForms = document.querySelector('input[name="questions-TOTAL_FORMS"]');
         const currentTotal = parseInt(totalForms.value);
         
-        // Clone the first form as template
-        const firstForm = document.querySelector('.question-formset');
-        const newForm = firstForm.cloneNode(true);
+        // Create a new question form HTML
+        const newFormHtml = `
+            <div class="question-formset" data-form-index="${currentTotal}">
+                <div class="question-header">
+                    <div class="d-flex align-items-center">
+                        <div class="question-number me-3">${currentTotal + 1}</div>
+                        <h5 class="mb-0">Question ${currentTotal + 1}</h5>
+                    </div>
+                    <span class="delete-question" onclick="deleteQuestion(this)" title="Delete Question">
+                        <i class="fas fa-trash"></i>
+                    </span>
+                </div>
+                
+                <input type="hidden" name="questions-${currentTotal}-id" id="id_questions-${currentTotal}-id">
+                <input type="hidden" name="questions-${currentTotal}-template" id="id_questions-${currentTotal}-template">
+                <input type="hidden" name="questions-${currentTotal}-DELETE" id="id_questions-${currentTotal}-DELETE">
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="id_questions-${currentTotal}-question_text" class="form-label">
+                                Question Text <span class="required-field">*</span>
+                            </label>
+                            <textarea name="questions-${currentTotal}-question_text" id="id_questions-${currentTotal}-question_text" class="form-control" rows="3" placeholder="Enter your question here" required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_questions-${currentTotal}-question_type" class="form-label">
+                                Question Type <span class="required-field">*</span>
+                            </label>
+                            <select name="questions-${currentTotal}-question_type" id="id_questions-${currentTotal}-question_type" class="form-select" required>
+                                <option value="TEXT">Text Input</option>
+                                <option value="TEXTAREA">Text Area</option>
+                                <option value="SELECT">Single Choice</option>
+                                <option value="RADIO">Radio Buttons</option>
+                                <option value="CHECKBOX">Multiple Choice</option>
+                                <option value="RATING">Rating Scale</option>
+                                <option value="DATE">Date</option>
+                                <option value="EMAIL">Email</option>
+                                <option value="PHONE">Phone Number</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="id_questions-${currentTotal}-order" class="form-label">Order</label>
+                            <input type="number" name="questions-${currentTotal}-order" id="id_questions-${currentTotal}-order" class="form-control" min="1" value="${currentTotal + 1}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input type="checkbox" name="questions-${currentTotal}-is_required" id="id_questions-${currentTotal}-is_required" class="form-check-input" checked>
+                                <label class="form-check-label" for="id_questions-${currentTotal}-is_required">
+                                    Required Question
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 rating-field" style="display: none;">
+                        <div class="form-group">
+                            <label for="id_questions-${currentTotal}-rating_scale" class="form-label">
+                                Rating Scale (1 to ?)
+                            </label>
+                            <input type="number" name="questions-${currentTotal}-rating_scale" id="id_questions-${currentTotal}-rating_scale" class="form-control" min="2" max="10" value="5">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="choices-field" style="display: none;">
+                    <div class="form-group">
+                        <label for="id_questions-${currentTotal}-choices_text" class="form-label">
+                            Answer Choices <span class="required-field">*</span>
+                        </label>
+                        <textarea name="questions-${currentTotal}-choices_text" id="id_questions-${currentTotal}-choices_text" class="form-control" rows="4" placeholder="Enter each choice on a new line"></textarea>
+                        <div class="help-text">Enter each choice on a new line</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_questions-${currentTotal}-help_text" class="form-label">Help Text</label>
+                    <textarea name="questions-${currentTotal}-help_text" id="id_questions-${currentTotal}-help_text" class="form-control" rows="2" placeholder="Optional additional information for this question"></textarea>
+                    <div class="help-text">Optional additional information for this question</div>
+                </div>
+            </div>
+        `;
         
-        // Update form index
-        newForm.setAttribute('data-form-index', currentTotal);
-        
-        // Update field names and IDs
-        const fields = newForm.querySelectorAll('input, select, textarea');
-        fields.forEach(field => {
-            const name = field.getAttribute('name');
-            const id = field.getAttribute('id');
-            
-            if (name) {
-                field.setAttribute('name', name.replace(/questions-\d+/, `questions-${currentTotal}`));
-            }
-            if (id) {
-                field.setAttribute('id', id.replace(/id_questions-\d+/, `id_questions-${currentTotal}`));
-            }
-            
-            // Clear values
-            if (field.type !== 'hidden') {
-                if (field.type === 'checkbox') {
-                    field.checked = field.getAttribute('name').includes('is_required');
-                } else {
-                    field.value = '';
-                }
-            }
-        });
-        
-        // Update labels
-        const labels = newForm.querySelectorAll('label');
-        labels.forEach(label => {
-            const forAttr = label.getAttribute('for');
-            if (forAttr) {
-                label.setAttribute('for', forAttr.replace(/id_questions-\d+/, `id_questions-${currentTotal}`));
-            }
-        });
-        
-        // Add delete button
-        const deleteBtn = newForm.querySelector('.delete-question');
-        if (deleteBtn) {
-            deleteBtn.style.display = 'inline';
-        }
-        
-        // Add to formset
-        formset.appendChild(newForm);
+        // Add the new form to the formset
+        formset.insertAdjacentHTML('beforeend', newFormHtml);
         
         // Update total forms count
         totalForms.value = currentTotal + 1;
         questionIndex = currentTotal + 1;
         
-        // Update question numbers
-        updateQuestionNumbers();
-        
-        // Set up field toggle for new form
-        toggleQuestionFields(newForm);
+        // Set up event listeners for the new form
+        const newForm = formset.lastElementChild;
+        const questionTypeSelect = newForm.querySelector('select[name$="-question_type"]');
+        if (questionTypeSelect) {
+            questionTypeSelect.addEventListener('change', function() {
+                toggleQuestionFields(newForm);
+            });
+        }
         
         // Focus on new question text
         const questionTextInput = newForm.querySelector('textarea[name$="-question_text"]');
         if (questionTextInput) {
             questionTextInput.focus();
         }
+        
+        // Update question numbers
+        updateQuestionNumbers();
     }
     
     function deleteQuestion(deleteBtn) {

@@ -68,19 +68,47 @@ class TemplateCreateView(LoginRequiredMixin, CreateView):
         context = self.get_context_data()
         question_formset = context['question_formset']
         
+        # Debug: Print formset errors
+        if not question_formset.is_valid():
+            print("Formset errors:", question_formset.errors)
+            print("Formset non-form errors:", question_formset.non_form_errors())
+            for i, form_errors in enumerate(question_formset.errors):
+                if form_errors:
+                    print(f"Form {i} errors:", form_errors)
+        
+        # DON'T save the template yet - validate everything first
         with transaction.atomic():
-            # Set the created_by field
+            # Set the created_by field but don't save yet
             form.instance.created_by = self.request.user
-            self.object = form.save()
+            
+            # Validate the question formset before saving anything
             if question_formset.is_valid():
+                # Only now save the template
+                self.object = form.save()
                 question_formset.instance = self.object
-                question_formset.save()
+                
+                # Process choices_text for each question form
+                for question_form in question_formset:
+                    if question_form.cleaned_data and not question_form.cleaned_data.get('DELETE', False):
+                        question_instance = question_form.save(commit=False)
+                        question_instance.template = self.object
+                        
+                        # Handle choices_text
+                        choices_text = question_form.cleaned_data.get('choices_text', '')
+                        if choices_text and question_instance.question_type in ['SELECT', 'RADIO', 'CHECKBOX']:
+                            question_instance.set_choices_from_text(choices_text)
+                        
+                        question_instance.save()
+                
+                valid_questions = len([f for f in question_formset if f.cleaned_data and not f.cleaned_data.get('DELETE', False)])
                 messages.success(
                     self.request, 
-                    f'✅ Template "{form.cleaned_data["title"]}" created successfully with {question_formset.total_form_count()} questions!'
+                    f'✅ Template "{form.cleaned_data["title"]}" created successfully with {valid_questions} question(s)!'
                 )
                 return redirect('form_templates:list')
             else:
+                # If questions are invalid, don't save the template at all
+                messages.error(self.request, '❌ Please correct the errors in the questions below.')
                 return self.form_invalid(form)
     
     def form_invalid(self, form):

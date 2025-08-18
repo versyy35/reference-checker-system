@@ -156,10 +156,11 @@ QuestionFormSet = inlineformset_factory(
     Template,
     Question,
     form=QuestionForm,
-    extra=1,
+    extra=1,  # Start with 1 empty form
     can_delete=True,
-    min_num=1,
-    validate_min=True
+    min_num=1,  # Require at least 1 question
+    validate_min=True,
+    fields=['question_text', 'question_type', 'is_required', 'order', 'rating_scale', 'help_text']
 )
 
 
