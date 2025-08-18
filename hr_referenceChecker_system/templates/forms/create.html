@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+
+{% block title %}Assign Form - HR Reference Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assignment-create-container {
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        color: var(--help-red);
+        font-weight: bold;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--help-red);
+        padding-bottom: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--help-dark-gray);
+        margin-bottom: 8px;
+    }
+    
+    .required-field {
+        color: var(--help-red);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--help-red);
+        box-shadow: 0 0 0 0.2rem rgba(179, 0, 27, 0.25);
+    }
+    
+    .btn-primary {
+        background-color: var(--help-red);
+        border-color: var(--help-red);
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .btn-secondary {
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .error-message {
+        color: var(--help-red);
+        font-size: 0.875rem;
+        margin-top: 5px;
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .preview-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        border-left: 4px solid var(--help-red);
+    }
+    
+    .template-preview, .referee-preview {
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .template-preview h6, .referee-preview h6 {
+        color: var(--help-red);
+        margin-bottom: 10px;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+    
+    .info-label {
+        font-weight: 500;
+        color: var(--help-dark-gray);
+    }
+    
+    .info-value {
+        color: #6c757d;
+    }
+    
+    .assignment-summary {
+        background: linear-gradient(135deg, var(--help-red) 0%, #8B0000 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin: 20px 0;
+    }
+    
+    .assignment-summary h5 {
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+    
+    .assignment-flow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .flow-item {
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    
+    .flow-arrow {
+        font-size: 1.2rem;
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="assignment-create-container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-paper-plane me-2"></i>
+            Assign Form to Referee
+        </h1>
+        <a href="{% url 'forms:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Assignments
+        </a>
+    </div>
+
+    <form method="post" id="assignmentForm">
+        {% csrf_token %}
+        
+        <!-- Assignment Details Section -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="fas fa-clipboard-list me-2"></i>
+                Assignment Details
+            </h3>
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.template.id_for_label }}" class="form-label">
+                            Select Template <span class="required-field">*</span>
+                        </label>
+                        {{ form.template }}
+                        {% if form.template.errors %}
+                            <div class="error-message">{{ form.template.errors.0 }}</div>
+                        {% endif %}
+                        <div class="help-text">{{ form.template.help_text }}</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.referee.id_for_label }}" class="form-label">
+                            Select Referee <span class="required-field">*</span>
+                        </label>
+                        {{ form.referee }}
+                        {% if form.referee.errors %}
+                            <div class="error-message">{{ form.referee.errors.0 }}</div>
+                        {% endif %}
+                        <div class="help-text">{{ form.referee.help_text }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="form-check">
+                    {{ form.send_email }}
+                    <label class="form-check-label" for="{{ form.send_email.id_for_label }}">
+                        Send email notification to referee
+                    </label>
+                </div>
+                <div class="help-text">{{ form.send_email.help_text }}</div>
+            </div>
+            
+            <!-- Assignment Preview -->
+            <div class="preview-section" id="assignmentPreview" style="display: none;">
+                <h6><i class="fas fa-eye me-2"></i>Assignment Preview</h6>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="template-preview" id="templatePreview">
+                            <h6><i class="fas fa-file-alt me-2"></i>Template Details</h6>
+                            <div id="templateInfo"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="referee-preview" id="refereePreview">
+                            <h6><i class="fas fa-user me-2"></i>Referee Details</h6>
+                            <div id="refereeInfo"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="assignment-summary">
+                    <h5>Assignment Summary</h5>
+                    <div class="assignment-flow">
+                        <span class="flow-item">Template Selected</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-item">Referee Chosen</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-item">Email Sent</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-item">Form Completed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="form-section">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'forms:list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>
+                    Cancel
+                </a>
+                <div>
+                    <a href="{% url 'forms:bulk_assign' %}" class="btn btn-outline-success me-2">
+                        <i class="fas fa-users me-2"></i>
+                        Bulk Assign Instead
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Assign Form
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const templateSelect = document.getElementById('{{ form.template.id_for_label }}');
+    const refereeSelect = document.getElementById('{{ form.referee.id_for_label }}');
+    const previewSection = document.getElementById('assignmentPreview');
+    const templateInfo = document.getElementById('templateInfo');
+    const refereeInfo = document.getElementById('refereeInfo');
+    
+    // Template and referee data (this would normally come from AJAX calls)
+    const templateData = {
+        {% for template in form.template.queryset %}
+        {{ template.pk }}: {
+            title: "{{ template.title|escapejs }}",
+            description: "{{ template.description|escapejs }}",
+            questions: {{ template.get_questions_count }},
+            active: {{ template.is_active|yesno:"true,false" }}
+        },
+        {% endfor %}
+    };
+    
+    const refereeData = {
+        {% for referee in form.referee.queryset %}
+        {{ referee.pk }}: {
+            name: "{{ referee.name|escapejs }}",
+            email: "{{ referee.email|escapejs }}",
+            phone: "{{ referee.phone|escapejs }}",
+            relationship: "{{ referee.relationship|escapejs }}",
+            applicant: "{{ referee.applicant_name|escapejs }}"
+        },
+        {% endfor %}
+    };
+    
+    function updatePreview() {
+        const templateId = templateSelect.value;
+        const refereeId = refereeSelect.value;
+        
+        if (templateId && refereeId) {
+            showPreview(templateId, refereeId);
+        } else {
+            hidePreview();
+        }
+    }
+    
+    function showPreview(templateId, refereeId) {
+        const template = templateData[templateId];
+        const referee = refereeData[refereeId];
+        
+        if (template && referee) {
+            // Update template info
+            templateInfo.innerHTML = `
+                <div class="info-item">
+                    <span class="info-label">Title:</span>
+                    <span class="info-value">${template.title}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Questions:</span>
+                    <span class="info-value">${template.questions} question${template.questions !== 1 ? 's' : ''}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">${template.active ? 'Active' : 'Inactive'}</span>
+                </div>
+                ${template.description ? `<div class="mt-2"><small class="text-muted">${template.description}</small></div>` : ''}
+            `;
+            
+            // Update referee info
+            refereeInfo.innerHTML = `
+                <div class="info-item">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value">${referee.name}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">${referee.email}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Relationship:</span>
+                    <span class="info-value">${referee.relationship}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Applicant:</span>
+                    <span class="info-value">${referee.applicant}</span>
+                </div>
+                ${referee.phone ? `<div class="info-item"><span class="info-label">Phone:</span><span class="info-value">${referee.phone}</span></div>` : ''}
+            `;
+            
+            previewSection.style.display = 'block';
+            previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+    
+    function hidePreview() {
+        previewSection.style.display = 'none';
+    }
+    
+    // Event listeners
+    templateSelect.addEventListener('change', updatePreview);
+    refereeSelect.addEventListener('change', updatePreview);
+    
+    // Form submission
+    document.getElementById('assignmentForm').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Assigning...';
+        submitBtn.disabled = true;
+        
+        // Re-enable button after 5 seconds in case of errors
+        setTimeout(function() {
+            if (submitBtn.disabled) {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }, 5000);
+    });
+    
+    // Auto-focus first field
+    templateSelect.focus();
+    
+    // Initial preview update if values are pre-selected
+    updatePreview();
+});
+</script>
+{% endblock %}
