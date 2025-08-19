@@ -397,12 +397,7 @@
     <!-- Action Buttons -->
     <div class="action-buttons">
         <h5 class="mb-4">Assignment Actions</h5>
-        
-        <a href="{% url 'forms:edit' assignment.pk %}" class="btn btn-primary">
-            <i class="fas fa-edit me-2"></i>
-            Edit Assignment
-        </a>
-        
+         
         {% if assignment.status == 'PENDING' %}
             <form method="post" action="{% url 'forms:resend' assignment.pk %}" style="display: inline;">
                 {% csrf_token %}
