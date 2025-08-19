@@ -1,0 +1,526 @@
+{% extends 'base.html' %}
+
+{% block title %}View Responses - HR Reference Checker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .responses-container {
+        padding: 20px;
+    }
+    
+    .stats-row {
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--help-red);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--help-dark-gray);
+        text-transform: uppercase;
+    }
+    
+    .filters-section {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .response-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .btn-action {
+        margin-right: 5px;
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .badge-completed {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .bulk-actions {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .bulk-actions h6 {
+        margin-bottom: 10px;
+        color: var(--help-dark-gray);
+    }
+    
+    .action-buttons-container {
+        min-width: 200px;
+        white-space: nowrap;
+    }
+    
+    .checkbox-column {
+        width: 40px;
+        text-align: center;
+    }
+    
+    .template-cell {
+        max-width: 200px;
+    }
+    
+    .referee-cell {
+        max-width: 180px;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .stat-card {
+            margin-bottom: 15px;
+        }
+        
+        .filters-section {
+            padding: 15px;
+        }
+        
+        .btn-action {
+            padding: 4px 8px;
+            margin-bottom: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="responses-container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-file-text me-2"></i>
+            View Responses
+        </h1>
+        <div>
+            <a href="{% url 'forms:list' %}" class="btn btn-outline-info me-2">
+                <i class="fas fa-clipboard-list me-2"></i>
+                Form Assignments
+            </a>
+            <a href="{% url 'form_templates:list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-file-alt me-2"></i>
+                Templates
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="row stats-row">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_responses }}</div>
+                <div class="stat-label">Total Responses</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ unique_templates }}</div>
+                <div class="stat-label">Templates with Responses</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-number">{{ recent_responses }}</div>
+                <div class="stat-label">Today's Responses</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="search" 
+                       name="search" 
+                       value="{{ search_query }}" 
+                       placeholder="Search responses...">
+            </div>
+            <div class="col-md-3">
+                <label for="template" class="form-label">Template</label>
+                <select class="form-select" id="template" name="template">
+                    <option value="">All Templates</option>
+                    {% for template in templates %}
+                        <option value="{{ template.pk }}" {% if template_filter == template.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ template.title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="date_from" class="form-label">From Date</label>
+                <input type="date" 
+                       class="form-control" 
+                       id="date_from" 
+                       name="date_from" 
+                       value="{{ date_from }}">
+            </div>
+            <div class="col-md-2">
+                <label for="date_to" class="form-label">To Date</label>
+                <input type="date" 
+                       class="form-control" 
+                       id="date_to" 
+                       name="date_to" 
+                       value="{{ date_to }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-search me-1"></i>Search
+                </button>
+                <a href="{% url 'responses:list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Responses Table -->
+    <div class="table-container">
+        {% if responses %}
+            <!-- Bulk Actions Form -->
+            <form method="post" action="{% url 'responses:bulk_export' %}" id="bulkForm">
+                {% csrf_token %}
+                
+                <!-- Bulk Actions Bar -->
+                <div class="bulk-actions">
+                    <h6>Bulk Actions</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAll()">
+                            <i class="fas fa-check-square me-1"></i>Select All
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="deselectAll()">
+                            <i class="fas fa-square me-1"></i>Deselect All
+                        </button>
+                        <span class="text-muted ms-3">|</span>
+                        <button type="submit" class="btn btn-success btn-sm" id="bulkExportBtn" disabled>
+                            <i class="fas fa-file-alt me-1"></i>Export Selected to Text
+                        </button>
+                        <span class="badge bg-info ms-2" id="selectedCount">0 selected</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                </th>
+                                <th>Template</th>
+                                <th>Referee</th>
+                                <th>Applicant</th>
+                                <th>Submitted</th>
+                                <th>Questions</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for response in responses %}
+                            <tr>
+                                <td class="checkbox-column">
+                                    <input type="checkbox" 
+                                           name="response_ids" 
+                                           value="{{ response.pk }}" 
+                                           class="response-checkbox"
+                                           onchange="updateBulkActions()">
+                                </td>
+                                <td class="template-cell">
+                                    <div class="response-info">
+                                        <div>
+                                            <strong>
+                                                <a href="{% url 'responses:detail' response.pk %}" 
+                                                   class="text-decoration-none">
+                                                    {{ response.form.template.title }}
+                                                </a>
+                                            </strong>
+                                            {% if response.form.template.description %}
+                                                <br><small class="text-muted">
+                                                    {{ response.form.template.description|truncatechars:50 }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="referee-cell">
+                                    <div>
+                                        <strong>{{ response.form.referee.name }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-envelope me-1"></i>{{ response.form.referee.email }}
+                                        </small>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-handshake me-1"></i>{{ response.form.referee.relationship }}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ response.form.referee.applicant_name }}</span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ response.submitted_at|date:"M d, Y" }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ response.submitted_at|time:"H:i" }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        {{ response.form.template.questions.count }} question{{ response.form.template.questions.count|pluralize }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ response.answer_set.count }} answered
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="action-buttons-container">
+                                        <a href="{% url 'responses:detail' response.pk %}" 
+                                           class="btn btn-outline-info btn-action" 
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        
+                                        <a href="{% url 'responses:export_pdf' response.pk %}" 
+                                           class="btn btn-outline-success btn-action" 
+                                           title="Export to Text">
+                                            <i class="fas fa-file-alt"></i>
+                                        </a>
+                                        
+                                        <a href="{% url 'forms:detail' response.form.pk %}" 
+                                           class="btn btn-outline-secondary btn-action" 
+                                           title="View Assignment">
+                                            <i class="fas fa-clipboard-list"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <nav aria-label="Response pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if template_filter %}&template={{ template_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if template_filter %}&template={{ template_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Previous</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if template_filter %}&template={{ template_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if template_filter %}&template={{ template_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-text fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Responses Found</h4>
+                <p class="text-muted">
+                    {% if search_query or template_filter or date_from or date_to %}
+                        No responses match your search criteria.
+                        <a href="{% url 'responses:list' %}">Clear filters</a> to see all responses.
+                    {% else %}
+                        No forms have been submitted yet.
+                    {% endif %}
+                </p>
+                {% if not search_query and not template_filter and not date_from and not date_to %}
+                    <div class="mt-4">
+                        <a href="{% url 'forms:assign' %}" class="btn btn-primary me-2">
+                            <i class="fas fa-plus me-2"></i>Assign Your First Form
+                        </a>
+                        <a href="{% url 'form_templates:list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-file-alt me-2"></i>Manage Templates
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Bulk selection functionality
+function selectAll() {
+    document.querySelectorAll('.response-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.getElementById('selectAllCheckbox').checked = true;
+    updateBulkActions();
+}
+
+function deselectAll() {
+    document.querySelectorAll('.response-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('selectAllCheckbox').checked = false;
+    updateBulkActions();
+}
+
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.response-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.response-checkbox');
+    const checkedBoxes = document.querySelectorAll('.response-checkbox:checked');
+    const bulkExportBtn = document.getElementById('bulkExportBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    // Update counter
+    selectedCount.textContent = `${checkedBoxes.length} selected`;
+    
+    // Enable/disable bulk export button
+    bulkExportBtn.disabled = checkedBoxes.length === 0;
+    
+    // Update select all checkbox state
+    if (checkedBoxes.length === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    } else if (checkedBoxes.length === checkboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+    } else {
+        selectAllCheckbox.indeterminate = true;
+    }
+}
+
+// Form submission handling
+document.getElementById('bulkForm').addEventListener('submit', function(e) {
+    const checkedBoxes = document.querySelectorAll('.response-checkbox:checked');
+    
+    if (checkedBoxes.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one response to export.');
+        return false;
+    }
+    
+    if (!confirm(`Export ${checkedBoxes.length} response${checkedBoxes.length !== 1 ? 's' : ''} to text file?`)) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // Show loading state
+    const bulkExportBtn = document.getElementById('bulkExportBtn');
+    const originalText = bulkExportBtn.innerHTML;
+    bulkExportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generating PDF...';
+    bulkExportBtn.disabled = true;
+    
+    // Reset button after 10 seconds in case of errors
+    setTimeout(function() {
+        bulkExportBtn.innerHTML = originalText;
+        bulkExportBtn.disabled = false;
+        updateBulkActions();
+    }, 10000);
+});
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    updateBulkActions();
+    
+    // Add row click navigation (excluding checkbox and action columns)
+    document.querySelectorAll('.table tbody tr').forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Don't navigate if clicking on checkboxes, buttons, or links
+            if (e.target.closest('input[type="checkbox"]') || 
+                e.target.closest('.btn') || 
+                e.target.closest('a')) {
+                return;
+            }
+            
+            const detailLink = this.querySelector('a[href*="/responses/"]');
+            if (detailLink) {
+                window.location.href = detailLink.href;
+            }
+        });
+        
+        // Add pointer cursor for clickable rows
+        row.style.cursor = 'pointer';
+    });
+});
+
+// Auto-refresh every 60 seconds for real-time updates
+setInterval(function() {
+    // Only refresh if we're on the first page and no filters are applied
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has('page') && !urlParams.has('search') && 
+        !urlParams.has('template') && !urlParams.has('date_from') && !urlParams.has('date_to')) {
+        location.reload();
+    }
+}, 60000);
+</script>
+{% endblock %}
