@@ -349,7 +349,7 @@
         </form>
         
         {% if template.is_active %}
-            <a href="#" class="btn btn-info" onclick="alert('Form assignment feature coming soon!')">
+            <a href="{% url 'forms:list' %}" class="btn btn-info">
                 <i class="fas fa-paper-plane me-2"></i>
                 Assign to Referees
             </a>
