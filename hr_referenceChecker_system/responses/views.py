@@ -1,11 +1,16 @@
+# Update responses/views.py - Add notification creation to form submission
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import View, TemplateView
 from django.contrib import messages
 from django.http import Http404, JsonResponse
 from django.utils import timezone
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 
 from forms.models import Form, FormStatus
+
+User = get_user_model()
 
 
 class PublicFormView(TemplateView):
@@ -43,14 +48,7 @@ class PublicFormView(TemplateView):
         context['referee'] = form_assignment.referee
         
         # Get all questions for this template using the correct relationship
-        # The Template model has a 'questions' related manager from the Question model
         context['questions'] = form_assignment.template.questions.all().order_by('order')
-        
-        # Debug: Let's see what we have
-        print(f"Template: {form_assignment.template.title}")
-        print(f"Questions count: {context['questions'].count()}")
-        for q in context['questions']:
-            print(f"Question {q.order}: {q.question_text} ({q.question_type})")
         
         # Check if this is the form display (after clicking start)
         context['show_form'] = self.request.GET.get('show_form', False)
@@ -87,6 +85,8 @@ class PublicFormView(TemplateView):
     
     def process_form_submission(self, request, form_assignment, *args, **kwargs):
         """Process the actual form submission with answers"""
+        from responses.models import Response, Answer
+        
         questions = form_assignment.template.questions.all()
         answers_data = {}
         errors = []
@@ -127,14 +127,33 @@ class PublicFormView(TemplateView):
                 messages.error(request, error)
             return redirect(f"{request.path}?show_form=true")
         
-        # Save responses (you'll need to implement this based on your Response model)
+        # Save responses
         try:
-            # TODO: Create Response objects for each answer
-            # This is where you'd save to your Response model
-            print(f"Saving answers: {answers_data}")
+            # Create Response record
+            response = Response.objects.create(
+                form=form_assignment,
+                metadata={
+                    'ip_address': self.get_client_ip(request),
+                    'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+                    'submitted_via': 'web_form'
+                }
+            )
             
-            # For now, just mark the form as completed
+            # Create Answer records for each question
+            for question_id, answer_value in answers_data.items():
+                question = questions.get(id=question_id)
+                Answer.objects.create(
+                    response=response,
+                    question_id=question_id,
+                    question_type=question.question_type,
+                    answer_value=answer_value
+                )
+            
+            # Mark the form as completed
             form_assignment.mark_completed()
+            
+            # 🎯 CREATE NOTIFICATION FOR ALL ACTIVE USERS
+            self.create_form_submission_notification(form_assignment)
             
             messages.success(request, 'Thank you! Your reference has been submitted successfully.')
             
@@ -144,3 +163,39 @@ class PublicFormView(TemplateView):
         
         # Redirect to show completion message
         return self.get(request, *args, **kwargs)
+    
+    def create_form_submission_notification(self, form_assignment):
+        """
+        Create notifications for all active staff when a form is submitted
+        """
+        try:
+            from core.models import Notification, NotificationType
+            
+            # Get all active staff users (you can customize this filter)
+            staff_users = User.objects.filter(is_active=True, is_staff=True)
+            
+            for user in staff_users:
+                Notification.create_notification(
+                    user=user,
+                    title="Form Submitted",
+                    message=f"{form_assignment.referee.name} submitted {form_assignment.template.title} for {form_assignment.referee.applicant_name}",
+                    notification_type=NotificationType.SUCCESS,
+                    icon='fas fa-check-circle',
+                    related_object=form_assignment
+                )
+            
+            print(f"✅ Created notifications for {staff_users.count()} staff members")
+            
+        except Exception as e:
+            print(f"❌ Error creating notifications: {e}")
+            # Don't fail the form submission if notification creation fails
+            pass
+    
+    def get_client_ip(self, request):
+        """Get client IP address"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
