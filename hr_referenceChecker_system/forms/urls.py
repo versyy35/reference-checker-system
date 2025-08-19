@@ -4,13 +4,23 @@ from . import views
 app_name = 'forms'
 
 urlpatterns = [
-    # Form assignment management
-    path('', views.FormAssignmentListView.as_view(), name='list'),
-    path('assign/', views.FormAssignmentCreateView.as_view(), name='assign'),
-    path('bulk-assign/', views.BulkAssignmentCreateView.as_view(), name='bulk_assign'),
-    path('<int:pk>/', views.FormAssignmentDetailView.as_view(), name='detail'),
-    path('<int:pk>/edit/', views.FormAssignmentUpdateView.as_view(), name='edit'),
-    path('<int:pk>/delete/', views.FormAssignmentDeleteView.as_view(), name='delete'),
-    path('<int:pk>/resend/', views.ResendNotificationView.as_view(), name='resend'),
-    path('stats/', views.FormAssignmentStatsView.as_view(), name='stats'),
+    # Form assignments list
+    path('', views.FormListView.as_view(), name='list'),
+    
+    # Single form assignment
+    path('assign/', views.FormCreateView.as_view(), name='assign'),
+    
+    # Bulk form assignment - using the fixed view
+    path('bulk-assign/', views.BulkAssignView.as_view(), name='bulk_assign'),
+    
+    # Form detail, edit, delete
+    path('<int:pk>/', views.FormDetailView.as_view(), name='detail'),
+    path('<int:pk>/edit/', views.FormUpdateView.as_view(), name='edit'),
+    path('<int:pk>/delete/', views.FormDeleteView.as_view(), name='delete'),
+    
+    # Form actions
+    path('<int:pk>/resend/', views.ResendEmailView.as_view(), name='resend'),
+    
+    # Statistics
+    path('stats/', views.FormStatsView.as_view(), name='stats'),
 ]

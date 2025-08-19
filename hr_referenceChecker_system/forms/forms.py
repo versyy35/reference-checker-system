@@ -67,24 +67,24 @@ class FormAssignmentForm(forms.ModelForm):
 
 class BulkAssignmentForm(forms.Form):
     """
-    Form for creating multiple assignments at once
+    Form for bulk assigning templates to multiple referees
     """
     template = forms.ModelChoiceField(
-        queryset=Template.objects.filter(is_active=True).order_by('title'),
+        queryset=Template.objects.filter(is_active=True),
+        empty_label="Select a template...",
         widget=forms.Select(attrs={
             'class': 'form-select',
             'required': True
         }),
-        empty_label="Select a template",
-        help_text="Choose the template to assign to multiple referees"
+        help_text="Choose the template to assign to selected referees"
     )
     
     referees = forms.ModelMultipleChoiceField(
-        queryset=Referee.objects.filter(is_active=True).order_by('name'),
+        queryset=Referee.objects.filter(is_active=True),
         widget=forms.CheckboxSelectMultiple(attrs={
             'class': 'form-check-input'
         }),
-        help_text="Select multiple referees to assign this template to"
+        help_text="Select one or more referees to assign the template to"
     )
     
     send_email = forms.BooleanField(
@@ -96,11 +96,49 @@ class BulkAssignmentForm(forms.Form):
         help_text="Send email notifications to all selected referees"
     )
     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Customize the referee choices to show more information
+        self.fields['referees'].queryset = Referee.objects.filter(
+            is_active=True
+        ).order_by('name')
+        
+        # Add CSS classes for better styling
+        self.fields['template'].widget.attrs.update({
+            'class': 'form-select',
+            'id': 'id_template'
+        })
+    
     def clean_referees(self):
+        """Validate that at least one referee is selected"""
         referees = self.cleaned_data.get('referees')
-        if not referees or len(referees) == 0:
-            raise ValidationError('Please select at least one referee.')
+        
+        if not referees:
+            raise forms.ValidationError("Please select at least one referee.")
+        
         return referees
+    
+    def clean(self):
+        """Cross-field validation"""
+        cleaned_data = super().clean()
+        template = cleaned_data.get('template')
+        referees = cleaned_data.get('referees')
+        
+        if template and referees:
+            # Check if template is active
+            if not template.is_active:
+                raise forms.ValidationError(
+                    "The selected template is not active and cannot be assigned."
+                )
+            
+            # Check if template has questions
+            if not template.questions.exists():
+                raise forms.ValidationError(
+                    "The selected template has no questions and cannot be assigned."
+                )
+        
+        return cleaned_data
 
 
 class FormAssignmentSearchForm(forms.Form):
