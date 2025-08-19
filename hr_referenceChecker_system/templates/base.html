@@ -223,10 +223,16 @@
             border: none;
             transition: background-color 0.2s ease;
             cursor: pointer;
+            position: relative;
         }
 
         .notification-item:hover {
             background-color: rgba(179, 0, 27, 0.05);
+        }
+
+        .notification-item.unread {
+            background-color: rgba(179, 0, 27, 0.05);
+            border-left: 3px solid var(--help-red);
         }
 
         .notification-message {
@@ -312,6 +318,60 @@
         .notification-badge {
             animation: notificationPulse 2s infinite;
         }
+
+        /* Additional styles for notification actions */
+        .notification-actions {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .notification-item:hover .notification-actions {
+            opacity: 1;
+        }
+
+        .notification-actions .btn {
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            border: none;
+        }
+
+        .notification-actions .btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .notification-item.removing {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+                max-height: 100px;
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-100%);
+                max-height: 0;
+                padding: 0;
+                margin: 0;
+            }
+        }
+
+        /* Enhanced dropdown header */
+        .dropdown-header .btn {
+            padding: 2px 6px;
+            font-size: 0.7rem;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -354,10 +414,10 @@
                             </a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle position-relative" href="#" title="Notifications" role="button" data-bs-toggle="dropdown">
+                            <a class="nav-link dropdown-toggle position-relative" href="#" title="Notifications" role="button" data-bs-toggle="dropdown" id="notificationDropdown">
                                 <i class="fas fa-bell fa-lg"></i>
                                 {% if notification_count > 0 %}
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge">
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge" id="notificationBadge">
                                         {{ notification_count }}
                                         <span class="visually-hidden">unread notifications</span>
                                     </span>
@@ -367,37 +427,57 @@
                                 <li>
                                     <div class="dropdown-header d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0">Recent Activity</h6>
-                                        {% if notification_count > 0 %}
-                                            <span class="badge bg-primary">{{ notification_count }}</span>
-                                        {% endif %}
+                                        <div class="d-flex gap-2">
+                                            {% if notification_count > 0 %}
+                                                <span class="badge bg-primary" id="notificationCount">{{ notification_count }}</span>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()" title="Mark All as Read">
+                                                    <i class="fas fa-check-double"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="clearAllNotifications()" title="Clear All">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </li>
                                 
                                 {% if notifications %}
-                                    {% for notification in notifications %}
-                                        <li>
-                                            <a class="dropdown-item notification-item" href="#" onclick="expandNotification(this, event)">
-                                                <div class="d-flex align-items-start">
-                                                    <i class="{{ notification.icon }} me-2 mt-1 text-{{ notification.type }} notification-icon"></i>
-                                                    <div class="flex-grow-1">
-                                                        <div class="notification-message" data-full-message="{{ notification.message|escape }}">
-                                                            {{ notification.message|truncatechars:60 }}
-                                                            {% if notification.message|length > 60 %}
-                                                                <span class="text-muted expand-indicator">... <small>(click to expand)</small></span>
+                                    <div id="notificationsList">
+                                        {% for notification in notifications %}
+                                            <li data-notification-id="{{ notification.id|default:forloop.counter }}">
+                                                <a class="dropdown-item notification-item {% if notification.is_new %}unread{% endif %}" href="#" onclick="handleNotificationClick(this, event, {{ notification.id|default:forloop.counter }})">
+                                                    <div class="d-flex align-items-start">
+                                                        <i class="{{ notification.icon }} me-2 mt-1 text-{{ notification.type }} notification-icon"></i>
+                                                        <div class="flex-grow-1">
+                                                            <div class="notification-message" data-full-message="{{ notification.message|escape }}">
+                                                                {{ notification.message|truncatechars:60 }}
+                                                                {% if notification.message|length > 60 %}
+                                                                    <span class="text-muted expand-indicator">... <small>(click to expand)</small></span>
+                                                                {% endif %}
+                                                            </div>
+                                                            <small class="text-muted notification-time">{{ notification.time|timesince }} ago</small>
+                                                            {% if notification.is_new %}
+                                                                <span class="badge bg-success badge-sm ms-1">New</span>
                                                             {% endif %}
                                                         </div>
-                                                        <small class="text-muted notification-time">{{ notification.time|timesince }} ago</small>
-                                                        {% if notification.is_new %}
-                                                            <span class="badge bg-success badge-sm ms-1">New</span>
-                                                        {% endif %}
+                                                        <div class="notification-actions">
+                                                            {% if notification.is_new %}
+                                                                <button class="btn btn-sm btn-outline-secondary" onclick="markSingleAsRead(event, {{ notification.id|default:forloop.counter }})" title="Mark as Read">
+                                                                    <i class="fas fa-check"></i>
+                                                                </button>
+                                                            {% endif %}
+                                                            <button class="btn btn-sm btn-outline-danger" onclick="dismissNotification(event, {{ notification.id|default:forloop.counter }})" title="Dismiss">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        {% if not forloop.last %}
-                                            <li><hr class="dropdown-divider"></li>
-                                        {% endif %}
-                                    {% endfor %}
+                                                </a>
+                                            </li>
+                                            {% if not forloop.last %}
+                                                <li><hr class="dropdown-divider"></li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
                                     
                                     {% if notification_count > 5 %}
                                         <li><hr class="dropdown-divider"></li>
@@ -408,7 +488,7 @@
                                         </li>
                                     {% endif %}
                                 {% else %}
-                                    <li>
+                                    <li id="emptyNotifications">
                                         <span class="dropdown-item text-muted text-center py-3">
                                             <i class="fas fa-bell-slash me-2"></i>
                                             No recent activity
@@ -419,7 +499,7 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item text-center" href="{% url 'core:notifications' %}">
-                                        <i class="fas fa-cog me-1"></i>Notification Settings
+                                        <i class="fas fa-cog me-1"></i>Manage Notifications
                                     </a>
                                 </li>
                             </ul>
@@ -488,8 +568,14 @@
     
     <!-- Enhanced Notification JavaScript -->
     <script>
-        function expandNotification(element, event) {
+        // Enhanced notification functionality
+        function handleNotificationClick(element, event, notificationId) {
             event.preventDefault();
+            
+            // Check if clicking on action buttons
+            if (event.target.closest('.notification-actions')) {
+                return;
+            }
             
             const messageDiv = element.querySelector('.notification-message');
             const fullMessage = messageDiv.getAttribute('data-full-message');
@@ -506,15 +592,279 @@
                 messageDiv.innerHTML = fullMessage;
                 messageDiv.classList.add('expanded');
             }
+            
+            // Auto-mark as read if it's unread
+            if (element.classList.contains('unread')) {
+                markSingleAsRead(event, notificationId, false);
+            }
         }
 
-        // Auto-hide dropdown when clicking outside
+        function markSingleAsRead(event, notificationId, stopPropagation = true) {
+            if (stopPropagation) {
+                event.stopPropagation();
+            }
+            
+            fetch(`/notifications/mark-read/${notificationId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    const notificationItem = document.querySelector(`[data-notification-id="${notificationId}"] .notification-item`);
+                    if (notificationItem) {
+                        notificationItem.classList.remove('unread');
+                        
+                        // Remove "New" badge
+                        const badge = notificationItem.querySelector('.badge-sm');
+                        if (badge) badge.remove();
+                        
+                        // Remove mark as read button
+                        const markReadBtn = notificationItem.querySelector('.notification-actions .btn-outline-secondary');
+                        if (markReadBtn) markReadBtn.remove();
+                    }
+                    
+                    updateNotificationBadge(data.unread_count);
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
+                showNotificationToast('Error marking notification as read', 'error');
+            });
+        }
+
+        function markAllAsRead() {
+            const badge = document.getElementById('notificationBadge');
+            if (badge) badge.classList.add('loading');
+            
+            fetch('/notifications/mark-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update all notification items
+                    document.querySelectorAll('.notification-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                        
+                        // Remove "New" badges
+                        const badge = item.querySelector('.badge-sm');
+                        if (badge) badge.remove();
+                        
+                        // Remove mark as read buttons
+                        const markReadBtn = item.querySelector('.notification-actions .btn-outline-secondary');
+                        if (markReadBtn) markReadBtn.remove();
+                    });
+                    
+                    updateNotificationBadge(0);
+                    showNotificationToast('All notifications marked as read', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error marking all notifications as read:', error);
+                showNotificationToast('Error marking notifications as read', 'error');
+            })
+            .finally(() => {
+                if (badge) badge.classList.remove('loading');
+            });
+        }
+
+        function clearAllNotifications() {
+            if (!confirm('Clear all notifications? This action cannot be undone.')) {
+                return;
+            }
+            
+            const notificationsList = document.getElementById('notificationsList');
+            if (notificationsList) notificationsList.classList.add('loading');
+            
+            fetch('/notifications/clear-all/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove all notification items with animation
+                    document.querySelectorAll('[data-notification-id]').forEach(item => {
+                        item.classList.add('removing');
+                    });
+                    
+                    // After animation, show empty state
+                    setTimeout(() => {
+                        const notificationsList = document.getElementById('notificationsList');
+                        if (notificationsList) {
+                            notificationsList.innerHTML = `
+                                <li id="emptyNotifications">
+                                    <span class="dropdown-item text-muted text-center py-3">
+                                        <i class="fas fa-bell-slash me-2"></i>
+                                        No recent activity
+                                    </span>
+                                </li>
+                            `;
+                        }
+                        
+                        // Hide the action buttons in header
+                        const headerActions = document.querySelector('.dropdown-header .d-flex');
+                        if (headerActions) {
+                            const buttons = headerActions.querySelectorAll('.btn');
+                            buttons.forEach(btn => btn.style.display = 'none');
+                        }
+                        
+                        updateNotificationBadge(0);
+                    }, 300);
+                    
+                    showNotificationToast('All notifications cleared', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing notifications:', error);
+                showNotificationToast('Error clearing notifications', 'error');
+            })
+            .finally(() => {
+                if (notificationsList) notificationsList.classList.remove('loading');
+            });
+        }
+
+        function dismissNotification(event, notificationId) {
+            event.stopPropagation();
+            
+            const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+            if (notificationElement) {
+                notificationElement.classList.add('removing');
+            }
+            
+            fetch(`/notifications/dismiss/${notificationId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the notification after animation
+                    setTimeout(() => {
+                        if (notificationElement) {
+                            notificationElement.remove();
+                        }
+                        
+                        // Check if no notifications left
+                        const remainingNotifications = document.querySelectorAll('[data-notification-id]');
+                        if (remainingNotifications.length === 0) {
+                            const notificationsList = document.getElementById('notificationsList');
+                            if (notificationsList) {
+                                notificationsList.innerHTML = `
+                                    <li id="emptyNotifications">
+                                        <span class="dropdown-item text-muted text-center py-3">
+                                            <i class="fas fa-bell-slash me-2"></i>
+                                            No recent activity
+                                        </span>
+                                    </li>
+                                `;
+                            }
+                            
+                            // Hide action buttons
+                            const headerActions = document.querySelector('.dropdown-header .d-flex');
+                            if (headerActions) {
+                                const buttons = headerActions.querySelectorAll('.btn');
+                                buttons.forEach(btn => btn.style.display = 'none');
+                            }
+                        }
+                    }, 300);
+                    
+                    updateNotificationBadge(data.unread_count);
+                }
+            })
+            .catch(error => {
+                console.error('Error dismissing notification:', error);
+                showNotificationToast('Error dismissing notification', 'error');
+                
+                // Remove loading state on error
+                if (notificationElement) {
+                    notificationElement.classList.remove('removing');
+                }
+            });
+        }
+
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            const countSpan = document.getElementById('notificationCount');
+            
+            if (count > 0) {
+                if (badge) {
+                    badge.textContent = count;
+                    badge.style.display = 'flex';
+                }
+                if (countSpan) {
+                    countSpan.textContent = count;
+                }
+            } else {
+                if (badge) {
+                    badge.style.display = 'none';
+                }
+                if (countSpan) {
+                    countSpan.style.display = 'none';
+                }
+            }
+        }
+
+        function getCsrfToken() {
+            const token = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (token) {
+                return token.value;
+            }
+            
+            // Fallback: get from cookies
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            
+            return '';
+        }
+
+        function showNotificationToast(message, type = 'info') {
+            // Create a simple toast notification
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            toast.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    const bsAlert = new bootstrap.Alert(toast);
+                    bsAlert.close();
+                }
+            }, 3000);
+        }
+
+        // Auto-hide dropdown when clicking outside (enhanced version)
         document.addEventListener('click', function(event) {
             const dropdown = document.querySelector('.notification-dropdown');
-            const toggle = document.querySelector('[data-bs-toggle="dropdown"]');
+            const toggle = document.querySelector('#notificationDropdown');
             
             if (dropdown && !dropdown.contains(event.target) && !toggle.contains(event.target)) {
-                // Close dropdown if clicking outside
                 const dropdownInstance = bootstrap.Dropdown.getInstance(toggle);
                 if (dropdownInstance) {
                     dropdownInstance.hide();
@@ -522,29 +872,48 @@
             }
         });
 
-        // Mark notification as read when clicked
+        // Refresh notifications periodically (every 30 seconds)
+        setInterval(() => {
+            // Only refresh if dropdown is closed
+            const dropdown = document.querySelector('.notification-dropdown');
+            if (dropdown && !dropdown.classList.contains('show')) {
+                // You can implement a lightweight AJAX call here to update notification count
+                // For now, we'll skip auto-refresh to avoid complexity
+            }
+        }, 30000);
+
+        // Legacy function for backward compatibility
+        function expandNotification(element, event) {
+            // Get the notification ID if available
+            const notificationItem = element.closest('[data-notification-id]');
+            const notificationId = notificationItem ? notificationItem.getAttribute('data-notification-id') : null;
+            
+            if (notificationId) {
+                handleNotificationClick(element, event, notificationId);
+            } else {
+                // Fallback to original behavior
+                event.preventDefault();
+                
+                const messageDiv = element.querySelector('.notification-message');
+                const fullMessage = messageDiv.getAttribute('data-full-message');
+                
+                if (messageDiv.classList.contains('expanded')) {
+                    // Collapse
+                    messageDiv.innerHTML = fullMessage.length > 60 ? 
+                        fullMessage.substring(0, 60) + '... <span class="text-muted expand-indicator"><small>(click to expand)</small></span>' : 
+                        fullMessage;
+                    messageDiv.classList.remove('expanded');
+                } else {
+                    // Expand
+                    messageDiv.innerHTML = fullMessage;
+                    messageDiv.classList.add('expanded');
+                }
+            }
+        }
+
+        // Legacy function for backward compatibility
         function markAsRead(notificationId) {
-            // You can implement AJAX call here to mark notification as read
-            fetch(`/notifications/mark-read/${notificationId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                }
-            }).then(response => {
-                if (response.ok) {
-                    // Update UI to show as read
-                    const badge = document.querySelector('.notification-badge');
-                    const currentCount = parseInt(badge.textContent);
-                    if (currentCount > 1) {
-                        badge.textContent = currentCount - 1;
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                }
-            }).catch(error => {
-                console.log('Error marking notification as read:', error);
-            });
+            markSingleAsRead(event, notificationId);
         }
     </script>
     
