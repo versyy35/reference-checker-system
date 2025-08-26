@@ -1,107 +1,185 @@
 {% extends 'base.html' %}
 
-{% block title %}Welcome - HR Reference Checker{% endblock %}
+{% block title %}HR Reference Checker - HELP International School{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <!-- Hero Section -->
-            <div class="text-center mb-5">
-                <div class="help-logo mx-auto mb-4" style="width: 100px; height: 100px; font-size: 3rem;">
-                    <i class="fas fa-tree"></i>
+<!-- Main Content -->
+<section class="py-5" style="background-color: #FFF1F1; min-height: 80vh;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                
+                <!-- Welcome -->
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bold mb-3" style="color: #34495E;">Reference Management Portal</h1>
+                    <p class="fs-5" style="color: #34495E; opacity: 0.8;">Secure access to reference checking services</p>
                 </div>
-                <h1 class="display-4 fw-bold text-dark mb-3">HR Reference Checker System</h1>
-                <p class="lead text-muted mb-4">HELP International School</p>
-                <p class="fs-5 text-muted">"Quality Through Efficiency"</p>
-            </div>
 
-            <!-- Welcome Card -->
-            <div class="card shadow-lg border-0">
-                <div class="card-header text-center py-4">
-                    <h3 class="mb-0">
-                        <i class="fas fa-clipboard-check me-2"></i>
-                        Welcome to the Reference Management System
-                    </h3>
-                </div>
-                <div class="card-body p-5">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5 class="text-primary mb-3">
-                                <i class="fas fa-users me-2"></i>
-                                For HR Staff
-                            </h5>
-                            <p class="text-muted mb-3">
-                                Manage referee information, create reference check templates, 
-                                assign forms to referees, and track responses efficiently.
-                            </p>
-                            <a href="{% url 'authentication:login' %}" class="btn btn-primary btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>
-                                Staff Login
-                            </a>
-                        </div>
-                        <div class="col-md-6">
-                            <h5 class="text-success mb-3">
-                                <i class="fas fa-file-alt me-2"></i>
-                                For Referees
-                            </h5>
-                            <p class="text-muted mb-3">
-                                If you received a reference check form via email, 
-                                use the secure link provided to complete your submission.
-                            </p>
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Have a form to complete?</strong><br>
-                                Check your email for the secure access link.
+                <!-- Portal Options -->
+                <div class="row g-4 mb-5">
+                    
+                    <!-- Staff Access -->
+                    <div class="col-md-6">
+                        <div class="card border-0 h-100" style="background-color: #FEFEFE;">
+                            <div class="card-body p-4">
+                                <div class="text-center mb-4">
+                                    <div class="rounded-circle p-3 d-inline-block mb-3" style="background-color: #B3001B;">
+                                        <i class="fas fa-users text-white fs-2"></i>
+                                    </div>
+                                    <h4 class="fw-bold mb-2" style="color: #34495E;">Staff Portal</h4>
+                                    <p style="color: #34495E; opacity: 0.7;">For HR Staff and Administrators</p>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-success rounded-circle p-1 me-3" style="width: 8px; height: 8px;"></div>
+                                        <span style="color: #34495E;">Manage referee information</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-success rounded-circle p-1 me-3" style="width: 8px; height: 8px;"></div>
+                                        <span style="color: #34495E;">Create reference templates</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-success rounded-circle p-1 me-3" style="width: 8px; height: 8px;"></div>
+                                        <span style="color: #34495E;">Track responses</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-success rounded-circle p-1 me-3" style="width: 8px; height: 8px;"></div>
+                                        <span style="color: #34495E;">Generate reports</span>
+                                    </div>
+                                </div>
+                                
+                                <a href="{% url 'authentication:login' %}" 
+                                   class="btn w-100 py-3 fw-bold text-white border-0" 
+                                   style="background-color: #B3001B;">
+                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                    Login to Portal
+                                </a>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Features Section -->
-            <div class="row mt-5">
-                <div class="col-md-4 text-center mb-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="text-primary mb-3">
-                                <i class="fas fa-shield-alt fa-3x"></i>
+                    <!-- Referee Access -->
+                    <div class="col-md-6">
+                        <div class="card border-0 h-100" style="background-color: #FEFEFE;">
+                            <div class="card-body p-4">
+                                <div class="text-center mb-4">
+                                    <div class="rounded-circle p-3 d-inline-block mb-3" style="background-color: #DEE2E6;">
+                                        <i class="fas fa-file-alt fs-2" style="color: #34495E;"></i>
+                                    </div>
+                                    <h4 class="fw-bold mb-2" style="color: #34495E;">Referee Access</h4>
+                                    <p style="color: #34495E; opacity: 0.7;">Complete reference forms</p>
+                                </div>
+                                
+                                <div class="alert border-0 mb-4" style="background-color: #DEE2E6;">
+                                    <div class="d-flex align-items-start">
+                                        <i class="fas fa-info-circle me-3 mt-1" style="color: #34495E;"></i>
+                                        <div>
+                                            <h6 class="fw-bold mb-1" style="color: #34495E;">Access Required</h6>
+                                            <small style="color: #34495E; opacity: 0.8;">
+                                                Check your email for a secure access link to complete reference forms.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row text-center g-2 mb-4">
+                                    <div class="col-4">
+                                        <div class="p-3 rounded" style="background-color: #DEE2E6;">
+                                            <i class="fas fa-envelope mb-2" style="color: #34495E;"></i>
+                                            <small class="d-block" style="color: #34495E;">Email</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-3 rounded" style="background-color: #DEE2E6;">
+                                            <i class="fas fa-link mb-2" style="color: #34495E;"></i>
+                                            <small class="d-block" style="color: #34495E;">Link</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-3 rounded" style="background-color: #DEE2E6;">
+                                            <i class="fas fa-edit mb-2" style="color: #34495E;"></i>
+                                            <small class="d-block" style="color: #34495E;">Submit</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button class="btn w-100 py-3 fw-bold border-0" 
+                                        style="background-color: #DEE2E6; color: #34495E;" disabled>
+                                    <i class="fas fa-lock me-2"></i>
+                                    Secure Link Required
+                                </button>
                             </div>
-                            <h5 class="card-title">Secure & Confidential</h5>
-                            <p class="card-text text-muted">
-                                All reference checks are protected with secure tokens and encrypted connections.
-                            </p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 text-center mb-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="text-success mb-3">
-                                <i class="fas fa-clock fa-3x"></i>
+
+                <!-- Features -->
+                <div class="card border-0" style="background-color: #FEFEFE;">
+                    <div class="card-body p-4">
+                        <h5 class="text-center fw-bold mb-4" style="color: #34495E;">System Features</h5>
+                        <div class="row g-4 text-center">
+                            <div class="col-md-4">
+                                <div class="rounded-circle p-3 d-inline-block mb-3" style="background-color: #DEE2E6;">
+                                    <i class="fas fa-shield-alt fs-4" style="color: #34495E;"></i>
+                                </div>
+                                <h6 class="fw-bold mb-2" style="color: #34495E;">Secure</h6>
+                                <small style="color: #34495E; opacity: 0.8;">
+                                    Encrypted connections and secure tokens
+                                </small>
                             </div>
-                            <h5 class="card-title">Efficient Process</h5>
-                            <p class="card-text text-muted">
-                                Streamlined workflow from form creation to response collection and analysis.
-                            </p>
+                            <div class="col-md-4">
+                                <div class="rounded-circle p-3 d-inline-block mb-3" style="background-color: #DEE2E6;">
+                                    <i class="fas fa-clock fs-4" style="color: #34495E;"></i>
+                                </div>
+                                <h6 class="fw-bold mb-2" style="color: #34495E;">Efficient</h6>
+                                <small style="color: #34495E; opacity: 0.8;">
+                                    Streamlined workflow and automation
+                                </small>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="rounded-circle p-3 d-inline-block mb-3" style="background-color: #DEE2E6;">
+                                    <i class="fas fa-chart-bar fs-4" style="color: #34495E;"></i>
+                                </div>
+                                <h6 class="fw-bold mb-2" style="color: #34495E;">Reports</h6>
+                                <small style="color: #34495E; opacity: 0.8;">
+                                    Comprehensive analytics and PDF exports
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 text-center mb-4">
-                    <div class="card h-100 border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="text-info mb-3">
-                                <i class="fas fa-chart-line fa-3x"></i>
-                            </div>
-                            <h5 class="card-title">Comprehensive Reports</h5>
-                            <p class="card-text text-muted">
-                                Generate detailed PDF reports and track response completion rates.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
     </div>
-</div>
+</section>
+
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Pragati+Narrow:wght@400;700&display=swap');
+
+* {
+    font-family: 'Pragati Narrow', sans-serif;
+}
+
+.card {
+    transition: transform 0.2s ease;
+    box-shadow: 0 2px 8px rgba(52, 73, 94, 0.08);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(52, 73, 94, 0.12);
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+</style>
 {% endblock %}
