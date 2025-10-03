@@ -11,4 +11,3 @@ staticfiles/
 hr_referenceChecker_system/settings.py
 web.config
 hr_referenceChecker_system/hr_referenceChecker_system/settings_local.py
-
